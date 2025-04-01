@@ -1,6 +1,6 @@
 #[test_only]
 module sand_dollar::sand_dollar_tests {
-    use sui::test_scenario::{Self, Scenario};
+    use sui::test_scenario::{Self};
     use sand_dollar::sand_dollar::{Self, EscrowNFT};
 
     const USER: address = @0xA;

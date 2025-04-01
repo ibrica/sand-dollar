@@ -13,7 +13,7 @@ SandDollar.fi allows users to:
 ## Project Structure
 
 ```
-sand-dollae/
+sand-dollar/
 ├── Move.toml           # Package manifest
 ├── sources/            # Smart contract source files
 │   └── sand_dollar.move
