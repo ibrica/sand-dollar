@@ -1,0 +1,17 @@
+[test]
+# Test configuration for sandDollar.fi
+
+# Test accounts
+[test.accounts]
+user = "0xA"
+admin = "0xB"
+
+# Test parameters
+[test.parameters]
+default_amount = 1000
+default_wbtc = true
+
+# Test scenarios
+[test.scenarios]
+basic_escrow = "test_create_and_redeem_escrow"
+invalid_amount = "test_create_escrow_with_zero_amount"

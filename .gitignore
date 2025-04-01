@@ -1,0 +1,26 @@
+# Build output
+build/
+*.trace
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Move specific
+*.trace
+*.trace.mvc
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Sui specific
+sui.log
+sui.log.* 
