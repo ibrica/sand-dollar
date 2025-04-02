@@ -7,10 +7,19 @@ module sand_dollar::sand_dollar {
 
     /// Error codes
     const EInvalidAmount: u64 = 0;
+    const EInvalidTokenType: u64 = 1;
+
+    /// Mainnet addresses for BTC tokens
+    const WBTC_ADDRESS: address = @0x027792d9fed7f9844eb4839566001bb6f6cb4804f66aa2da6fe1ee242d896881;
+    const LBTC_ADDRESS: address = @0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040;
+
+    /// Token type constants
+    const TOKEN_TYPE_WBTC: u8 = 0;
+    const TOKEN_TYPE_LBTC: u8 = 1;
 
     /// Represents the type of BTC token being escrowed
     struct BTCTokenType has store, copy, drop {
-        is_wbtc: bool
+        token_type: u8
     }
 
     /// NFT representing escrowed BTC position
@@ -45,11 +54,14 @@ module sand_dollar::sand_dollar {
         // Validate amount
         assert!(amount > 0, EInvalidAmount);
 
-        let token_type = BTCTokenType { is_wbtc };
+        let token_type = BTCTokenType {
+            token_type: if (is_wbtc) TOKEN_TYPE_WBTC else TOKEN_TYPE_LBTC
+        };
+
         let escrow = EscrowNFT {
             id: object::new(ctx),
             amount,
-            token_type: token_type,
+            token_type,
             timestamp: tx_context::epoch(ctx),
         };
 
