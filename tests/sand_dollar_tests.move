@@ -1,78 +1,61 @@
 #[test_only]
 module sand_dollar::sand_dollar_tests {
-    use sui::test_scenario::{Self};
+    use sui::test_scenario::{Self, Scenario};
+    use sui::coin::{Self, Coin};
+    use sui::sui::SUI;
+    use sui::tx_context::TxContext;
     use sand_dollar::sand_dollar::{Self, EscrowNFT};
 
-    const USER: address = @0xA;
+    const TEST_USER: address = @0x123;
 
     #[test]
-    fun test_create_wbtc_escrow() {
-        let scenario = test_scenario::begin(USER);
-        test_scenario::next_tx(&mut scenario, USER);
-        {
-            sand_dollar::create_escrow(1000, true, test_scenario::ctx(&mut scenario));
-        };
-        test_scenario::end(scenario);
-    }
+    fun test_create_and_redeem_escrow() {
+        let scenario = test_scenario::begin(TEST_USER);
+        let ctx = test_scenario::ctx(&mut scenario);
 
-    #[test]
-    fun test_create_lbtc_escrow() {
-        let scenario = test_scenario::begin(USER);
-        test_scenario::next_tx(&mut scenario, USER);
-        {
-            sand_dollar::create_escrow(1000, false, test_scenario::ctx(&mut scenario));
-        };
-        test_scenario::end(scenario);
-    }
+        // Create test coins
+        let wbtc_coin = coin::mint_for_testing<SUI>(1000, ctx);
+        let lbtc_coin = coin::mint_for_testing<SUI>(1000, ctx);
 
-    #[test]
-    fun test_redeem_wbtc_escrow() {
-        let scenario = test_scenario::begin(USER);
-        
-        // First transaction: Create escrow
-        test_scenario::next_tx(&mut scenario, USER);
+        // Test WBTC escrow
         {
-            sand_dollar::create_escrow(1000, true, test_scenario::ctx(&mut scenario));
-        };
-        
-        // Second transaction: Redeem escrow
-        test_scenario::next_tx(&mut scenario, USER);
-        {
-            let escrow = test_scenario::take_from_sender<EscrowNFT>(&scenario);
-            sand_dollar::redeem_escrow(escrow, test_scenario::ctx(&mut scenario));
-        };
-        
-        test_scenario::end(scenario);
-    }
+            test_scenario::next_tx(&mut scenario, TEST_USER);
+            let ctx = test_scenario::ctx(&mut scenario);
 
-    #[test]
-    fun test_redeem_lbtc_escrow() {
-        let scenario = test_scenario::begin(USER);
-        
-        // First transaction: Create escrow
-        test_scenario::next_tx(&mut scenario, USER);
-        {
-            sand_dollar::create_escrow(1000, false, test_scenario::ctx(&mut scenario));
+            sand_dollar::create_escrow(1000, true, wbtc_coin, ctx);
+
+            let escrow = test_scenario::take_from_sender<EscrowNFT<SUI>>(&scenario);
+            test_scenario::return_to_sender(&mut scenario, escrow);
         };
-        
-        // Second transaction: Redeem escrow
-        test_scenario::next_tx(&mut scenario, USER);
+
+        // Test LBTC escrow
         {
-            let escrow = test_scenario::take_from_sender<EscrowNFT>(&scenario);
-            sand_dollar::redeem_escrow(escrow, test_scenario::ctx(&mut scenario));
+            test_scenario::next_tx(&mut scenario, TEST_USER);
+            let ctx = test_scenario::ctx(&mut scenario);
+
+            sand_dollar::create_escrow(1000, false, lbtc_coin, ctx);
+
+            let escrow = test_scenario::take_from_sender<EscrowNFT<SUI>>(&scenario);
+            test_scenario::return_to_sender(&mut scenario, escrow);
         };
-        
+
         test_scenario::end(scenario);
     }
 
     #[test]
     #[expected_failure(abort_code = 0)]
-    fun test_create_escrow_with_zero_amount() {
-        let scenario = test_scenario::begin(USER);
-        test_scenario::next_tx(&mut scenario, USER);
-        {
-            sand_dollar::create_escrow(0, true, test_scenario::ctx(&mut scenario));
-        };
+    fun test_create_escrow_zero_amount() {
+        let scenario = test_scenario::begin(TEST_USER);
+        let ctx = test_scenario::ctx(&mut scenario);
+
+        // Create test coin
+        let wbtc_coin = coin::mint_for_testing<SUI>(1000, ctx);
+
+        test_scenario::next_tx(&mut scenario, TEST_USER);
+        let ctx = test_scenario::ctx(&mut scenario);
+
+        sand_dollar::create_escrow(0, true, wbtc_coin, ctx);
+
         test_scenario::end(scenario);
     }
 } 

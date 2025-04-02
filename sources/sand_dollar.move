@@ -60,12 +60,12 @@ module sand_dollar::sand_dollar {
     }
 
     /// Create a new escrow position
-    public entry fun create_escrow<T>(
+    public fun create_escrow<T>(
         amount: u64,
         is_wbtc: bool,
         coin: Coin<T>,
         ctx: &mut TxContext
-    ) {
+    ): EscrowNFT<T> {
         // Validate amount
         assert!(amount > 0, EInvalidAmount);
 
@@ -94,21 +94,30 @@ module sand_dollar::sand_dollar {
             owner: tx_context::sender(ctx),
         });
 
-        // Transfer NFT to sender
-        transfer::transfer(escrow, tx_context::sender(ctx));
+        escrow
+    }
+
+    /// Entry function to create escrow
+    public entry fun create_escrow_entry<T>(
+        amount: u64,
+        is_wbtc: bool,
+        coin: Coin<T>,
+        ctx: &mut TxContext
+    ) {
+        let escrow = create_escrow(amount, is_wbtc, coin, ctx);
+        transfer::public_transfer(escrow, tx_context::sender(ctx));
     }
 
     /// Redeem escrowed tokens
-    public entry fun redeem_escrow<T>(
+    public fun redeem_escrow<T>(
         escrow: EscrowNFT<T>,
         ctx: &mut TxContext
-    ) {
+    ): Coin<T> {
         let escrow_id = object::id(&escrow);
         let EscrowNFT { id, amount, token_type, timestamp: _, balance } = escrow;
 
-        // Create coin from balance and transfer to sender
+        // Create coin from balance
         let coin = coin::from_balance(balance, ctx);
-        transfer::public_transfer(coin, tx_context::sender(ctx));
 
         // Emit event before burning
         event::emit(EscrowRedeemed {
@@ -120,5 +129,16 @@ module sand_dollar::sand_dollar {
 
         // Burn NFT
         object::delete(id);
+
+        coin
+    }
+
+    /// Entry function to redeem escrow
+    public entry fun redeem_escrow_entry<T>(
+        escrow: EscrowNFT<T>,
+        ctx: &mut TxContext
+    ) {
+        let coin = redeem_escrow(escrow, ctx);
+        transfer::public_transfer(coin, tx_context::sender(ctx));
     }
 } 
