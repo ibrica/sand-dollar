@@ -29,8 +29,7 @@ module sand_dollar::sand_dollar {
         id: UID,
         amount: u64,
         token_type: BTCTokenType,
-        timestamp: u64,
-        balance: Balance<T>
+        timestamp: u64
     }
 
     /// Events
@@ -61,8 +60,9 @@ module sand_dollar::sand_dollar {
         amount: u64,
         is_wbtc: bool,
         mut coin: Coin<T>,
+        storage: &mut EscrowStorage,
         ctx: &mut TxContext
-    ): (EscrowNFT<T>, Coin<T>) {
+    ): EscrowNFT<T> {
         // Validate amount
         assert!(amount > 0, EInvalidAmount);
 
@@ -77,8 +77,7 @@ module sand_dollar::sand_dollar {
             id: object::new(ctx),
             amount,
             token_type,
-            timestamp: tx_context::epoch(ctx),
-            balance: escrow_balance
+            timestamp: tx_context::epoch(ctx)
         };
 
         let escrow_id = object::id(&escrow);
@@ -91,7 +90,13 @@ module sand_dollar::sand_dollar {
             owner: tx_context::sender(ctx),
         });
 
-        (escrow, coin)
+        // Store escrowed coins in secure storage
+        dynamic_field::add(&mut storage.id, escrow_id, escrow_balance);
+
+        // Return remaining coin to sender
+        transfer::public_transfer(coin, tx_context::sender(ctx));
+
+        escrow
     }
 
     /// Entry function to create escrow
@@ -99,23 +104,27 @@ module sand_dollar::sand_dollar {
         amount: u64,
         is_wbtc: bool,
         coin: Coin<T>,
+        storage: &mut EscrowStorage,
         ctx: &mut TxContext
     ) {
-        let (escrow, remaining_coin) = create_escrow(amount, is_wbtc, coin, ctx);
+        let escrow = create_escrow(amount, is_wbtc, coin, storage, ctx);
         transfer::public_transfer(escrow, tx_context::sender(ctx));
-        transfer::public_transfer(remaining_coin, tx_context::sender(ctx));
     }
 
     /// Redeem escrowed tokens
     public fun redeem_escrow<T>(
         escrow: EscrowNFT<T>,
+        storage: &mut EscrowStorage,
         ctx: &mut TxContext
     ): Coin<T> {
         let escrow_id = object::id(&escrow);
-        let EscrowNFT { id, amount, token_type, timestamp: _, balance } = escrow;
+        let EscrowNFT { id, amount, token_type, timestamp: _ } = escrow;
+
+        // Get escrowed coins from storage
+        let escrow_balance = dynamic_field::remove(&mut storage.id, escrow_id);
 
         // Create coin from balance
-        let coin = coin::from_balance(balance, ctx);
+        let coin = coin::from_balance(escrow_balance, ctx);
 
         // Emit event before burning
         event::emit(EscrowRedeemed {
@@ -134,9 +143,10 @@ module sand_dollar::sand_dollar {
     /// Entry function to redeem escrow
     public entry fun redeem_escrow_entry<T>(
         escrow: EscrowNFT<T>,
+        storage: &mut EscrowStorage,
         ctx: &mut TxContext
     ) {
-        let coin = redeem_escrow(escrow, ctx);
+        let coin = redeem_escrow(escrow, storage, ctx);
         transfer::public_transfer(coin, tx_context::sender(ctx));
     }
 } 
