@@ -48,7 +48,7 @@ module sand_dollar::sand_dollar {
     }
 
     /// Initialize the escrow storage
-    fun init(ctx: &mut TxContext) {
+    public fun init(ctx: &mut TxContext) {
         let storage = EscrowStorage {
             id: object::new(ctx)
         };
@@ -62,7 +62,7 @@ module sand_dollar::sand_dollar {
         mut coin: Coin<T>,
         storage: &mut EscrowStorage,
         ctx: &mut TxContext
-    ): EscrowNFT<T> {
+    ): (EscrowNFT<T>, Coin<T>) {
         // Validate amount
         assert!(amount > 0, EInvalidAmount);
 
@@ -89,14 +89,10 @@ module sand_dollar::sand_dollar {
             token_type,
             owner: tx_context::sender(ctx),
         });
-
         // Store escrowed coins in secure storage
         dynamic_field::add(&mut storage.id, escrow_id, escrow_balance);
 
-        // Return remaining coin to sender
-        transfer::public_transfer(coin, tx_context::sender(ctx));
-
-        escrow
+        (escrow, coin)
     }
 
     /// Entry function to create escrow
@@ -106,10 +102,6 @@ module sand_dollar::sand_dollar {
         coin: Coin<T>,
         storage: &mut EscrowStorage,
         ctx: &mut TxContext
-    ) {
-        let escrow = create_escrow(amount, is_wbtc, coin, storage, ctx);
-        transfer::public_transfer(escrow, tx_context::sender(ctx));
-    }
 
     /// Redeem escrowed tokens
     public fun redeem_escrow<T>(
@@ -148,5 +140,13 @@ module sand_dollar::sand_dollar {
     ) {
         let coin = redeem_escrow(escrow, storage, ctx);
         transfer::public_transfer(coin, tx_context::sender(ctx));
+    }
+
+    #[test_only]
+    /// Initialize the escrow storage for testing
+    public fun init_for_testing(ctx: &mut TxContext): EscrowStorage {
+        EscrowStorage {
+            id: object::new(ctx)
+        }
     }
 } 
