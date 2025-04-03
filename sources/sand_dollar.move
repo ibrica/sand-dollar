@@ -1,34 +1,31 @@
 #[allow(unused_use)]
 module sand_dollar::sand_dollar {
-    use sui::object::{Self, ID, UID};
-    use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
     use sui::event;
     use sui::coin::{Self, Coin};
-    use sui::balance::{Self, Balance};
+    use sui::balance::{Balance};
     use sui::dynamic_field;
 
     /// Error codes
     const EInvalidAmount: u64 = 0;
-    const EInvalidTokenType: u64 = 1;
-    const EInvalidToken: u64 = 2;
+    // const EInvalidTokenType: u64 = 1;
+    // const EInvalidToken: u64 = 2;
 
     /// Token type constants
     const TOKEN_TYPE_WBTC: u8 = 0;
     const TOKEN_TYPE_LBTC: u8 = 1;
 
     /// Represents the type of BTC token being escrowed
-    struct BTCTokenType has store, copy, drop {
+    public struct BTCTokenType has store, copy, drop {
         token_type: u8
     }
 
     /// Escrow storage - shared object
-    struct EscrowStorage has key {
+    public struct EscrowStorage has key {
         id: UID
     }
 
     /// NFT representing escrowed BTC position
-    struct EscrowNFT<phantom T> has key, store {
+    public struct EscrowNFT<phantom T> has key, store {
         id: UID,
         amount: u64,
         token_type: BTCTokenType,
@@ -37,14 +34,14 @@ module sand_dollar::sand_dollar {
     }
 
     /// Events
-    struct EscrowCreated has copy, drop {
+    public struct EscrowCreated has copy, drop {
         escrow_id: ID,
         amount: u64,
         token_type: BTCTokenType,
         owner: address,
     }
 
-    struct EscrowRedeemed has copy, drop {
+    public  struct EscrowRedeemed has copy, drop {
         escrow_id: ID,
         amount: u64,
         token_type: BTCTokenType,
@@ -63,9 +60,9 @@ module sand_dollar::sand_dollar {
     public fun create_escrow<T>(
         amount: u64,
         is_wbtc: bool,
-        coin: Coin<T>,
+        mut coin: Coin<T>,
         ctx: &mut TxContext
-    ): EscrowNFT<T> {
+    ): (EscrowNFT<T>, Coin<T>) {
         // Validate amount
         assert!(amount > 0, EInvalidAmount);
 
@@ -94,7 +91,7 @@ module sand_dollar::sand_dollar {
             owner: tx_context::sender(ctx),
         });
 
-        escrow
+        (escrow, coin)
     }
 
     /// Entry function to create escrow
@@ -104,8 +101,9 @@ module sand_dollar::sand_dollar {
         coin: Coin<T>,
         ctx: &mut TxContext
     ) {
-        let escrow = create_escrow(amount, is_wbtc, coin, ctx);
+        let (escrow, remaining_coin) = create_escrow(amount, is_wbtc, coin, ctx);
         transfer::public_transfer(escrow, tx_context::sender(ctx));
+        transfer::public_transfer(remaining_coin, tx_context::sender(ctx));
     }
 
     /// Redeem escrowed tokens
