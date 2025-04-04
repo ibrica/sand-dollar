@@ -4,6 +4,9 @@ module sand_dollar::sand_dollar {
     use sui::coin::{Self, Coin};
     use sui::balance::{Balance};
     use std::string::{Self, String};
+
+
+
     use sui::url::{Self, Url};
 
     /// Error codes
@@ -26,7 +29,7 @@ module sand_dollar::sand_dollar {
         name: String,
         description: String,
         url: Url,
-     //   escrow_id: ID,
+       escrow_id: ID,
     }
 
     /// Events
@@ -38,7 +41,7 @@ module sand_dollar::sand_dollar {
         claimed_amount: u64,
         lock_start: u64,
         lock_end: u64,
-        nft_id: ID, // linked NFT's ID
+        nft_address: address, // linked NFT's ID
     }
 
     /// Events
@@ -70,13 +73,6 @@ module sand_dollar::sand_dollar {
 
         let escrow_uid = object::new(ctx);
 
-        let escrow_nft = EscrowNFT {
-            id: object::new(ctx),
-            name: string::utf8(b"Sand Dollar"),
-            description: string::utf8(b"Sand Dollar"),
-            url: url::new_unsafe_from_bytes(b"https://sanddollar.com"),
-    //        escrow_id: object::id(&escrow_uid),
-        };
 
         let escrow =   Escrow {
             id: escrow_uid,
@@ -86,8 +82,17 @@ module sand_dollar::sand_dollar {
             claimed_amount: 0,
             lock_start: 0,
             lock_end: 0,
-            nft_id: object::id(&escrow_nft),
+            nft_address: object::uid_to_address(&escrow_uid),
         };
+
+            let escrow_nft = EscrowNFT {
+            id: object::new(ctx),
+            name: string::utf8(b"Sand Dollar"),
+            description: string::utf8(b"Sand Dollar"),
+            url: url::new_unsafe_from_bytes(b"https://sanddollar.com"),
+            escrow_id: object::id(&escrow),
+        };
+
 
 
         // Emit event
@@ -106,32 +111,33 @@ module sand_dollar::sand_dollar {
     }
 
 
-    // /// Entry function to redeem escrow
-    // public entry fun redeem_escrow_entry<T>(
-    //     escrowNFT: EscrowNFT,
-    //     storage: &mut EscrowStorage,
-    //     ctx: &mut TxContext
-    // ) {
-    //     let escrow_id = object::id(&escrow);
-    //     let EscrowNFT { id, amount, token_type, timestamp: _ } = escrowNFT;
+    /// Entry function to redeem escrow
+    public entry fun redeem_escrow_entry<T>(
+        escrowNFT: EscrowNFT,
+        ctx: &mut TxContext
+    ) {
+        if (exists<Escrow>(escrowNFT.escrow_id)) {
+            let escrow = object::borrow_mut_global<Escrow>(escrowNFT.escrow_id);
+            let Escrow { id, amount, token_type, timestamp: _ } = escrow;
 
-    //     // Get escrowed coins from storage
-    //     let escrow_balance = dynamic_field::remove(&mut storage.id, escrow_id);
+        // Get escrowed coins from storage
+        let escrow_balance = dynamic_field::remove(&mut storage.id, escrow_id);
 
-    //     // Create coin from balance
-    //     let coin: Coin<T> = coin::from_balance(escrow_balance, ctx);
+        // Create coin from balance
+        let coin: Coin<T> = coin::from_balance(escrow_balance, ctx);
 
-    //     // Emit event before burning
-    //     event::emit(EscrowRedeemed {
-    //         escrow_id,
-    //         amount,
-    //         token_type,
-    //         owner: tx_context::sender(ctx),
-    //     });
+        // Emit event before burning
+        event::emit(EscrowRedeemed {
+            escrow_id,
+            amount,
+            token_type,
+            owner_id: tx_context::sender(ctx),
+        });
 
-    //     transfer::public_transfer(coin, tx_context::sender(ctx));
+        transfer::public_transfer(coin, tx_context::sender(ctx));
 
-    //     // Burn NFT
-    //     object::delete(id);
-    // }
+        // Burn NFT
+            object::delete(id);
+        }
+    }
 } 
