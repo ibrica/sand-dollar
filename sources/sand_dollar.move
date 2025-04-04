@@ -1,9 +1,10 @@
 #[allow(unused_use)]
 module sand_dollar::sand_dollar {
-    use sui::event;
+    use sui::{dynamic_field, event} ;
     use sui::coin::{Self, Coin};
     use sui::balance::{Balance};
-    use sui::dynamic_field;
+    use std::string::{Self, String};
+    use sui::url::{Self, Url};
 
     /// Error codes
     const EInvalidAmount: u64 = 0;
@@ -15,7 +16,7 @@ module sand_dollar::sand_dollar {
     const TOKEN_TYPE_LBTC: u8 = 1;
 
     /// Represents the type of BTC token being escrowed
-    public struct BTCTokenType has store, copy, drop {
+    public struct TokenType has store, copy, drop {
         token_type: u8
     }
 
@@ -25,26 +26,37 @@ module sand_dollar::sand_dollar {
     }
 
     /// NFT representing escrowed BTC position
-    public struct EscrowNFT<phantom T> has key, store {
+    public struct EscrowNFT has key, store {
+        id: UID,
+        name: String,
+        description: String,
+        url: Url,
+    }
+
+    /// Events
+    public struct Escrow has key, store {
         id: UID,
         amount: u64,
-        token_type: BTCTokenType,
-        timestamp: u64
+        accumulated_amount: u64,
+        claimed_amount: u64,
+        lock_start: u64,
+        lock_end: u64,
+        nft_id: ID, // linked NFT's ID
     }
 
     /// Events
     public struct EscrowCreated has copy, drop {
         escrow_id: ID,
         amount: u64,
-        token_type: BTCTokenType,
-        owner: address,
+        token_type: TokenType,
+        owner_id: address,
     }
 
     public  struct EscrowRedeemed has copy, drop {
         escrow_id: ID,
         amount: u64,
-        token_type: BTCTokenType,
-        owner: address,
+        token_type: TokenType,
+        owner_id: address,
     }
 
     /// Initialize the escrow storage
@@ -57,10 +69,9 @@ module sand_dollar::sand_dollar {
 
 
     /// Entry function to create escrow
-    public entry fun create_escrow<T>(
+    public entry fun create_escrow(
         amount: u64,
-        is_wbtc: bool,
-        coin: &mut Coin<T>,
+        coin: &mut Coin<TokenType>,
         storage: &mut EscrowStorage,
         ctx: &mut TxContext
     ){
@@ -70,15 +81,13 @@ module sand_dollar::sand_dollar {
         // Extract balance from coin
         let escrow_balance = coin::into_balance(coin::split(coin, amount, ctx));
 
-        let token_type = BTCTokenType {
-            token_type: if (is_wbtc) TOKEN_TYPE_WBTC else TOKEN_TYPE_LBTC
-        };
 
-        let escrowNFT = EscrowNFT<T> {
+
+        let escrowNFT = EscrowNFT {
             id: object::new(ctx),
-            amount,
-            token_type,
-            timestamp: tx_context::epoch(ctx)
+            name: string::utf8(b"Sand Dollar"),
+            description: string::utf8(b"Sand Dollar"),
+            url: url::new_unsafe_from_bytes(b"https://sanddollar.com"),
         };
 
         let escrow_id = object::id(&escrowNFT);
@@ -87,8 +96,8 @@ module sand_dollar::sand_dollar {
         event::emit(EscrowCreated {
             escrow_id,
             amount,
-            token_type,
-            owner: tx_context::sender(ctx),
+            token_type: TokenType { token_type: TOKEN_TYPE_WBTC },
+            owner_id: tx_context::sender(ctx),
         });
         // Store escrowed coins in secure storage
         dynamic_field::add(&mut storage.id, escrow_id, escrow_balance);
@@ -102,7 +111,7 @@ module sand_dollar::sand_dollar {
 
     /// Entry function to redeem escrow
     public entry fun redeem_escrow_entry<T>(
-        escrow: EscrowNFT<T>,
+        escrow: EscrowNFT,
         storage: &mut EscrowStorage,
         ctx: &mut TxContext
     ) {
