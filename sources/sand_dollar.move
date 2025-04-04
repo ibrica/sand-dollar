@@ -136,4 +136,11 @@ module sand_dollar::sand_dollar {
             id: object::new(ctx)
         }
     }
+
+    #[test_only]
+    /// Clean up the escrow storage for testing
+    public fun cleanup_storage(storage: EscrowStorage) {
+        let EscrowStorage { id } = storage;
+        object::delete(id);
+    }
 } 
