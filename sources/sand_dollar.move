@@ -20,22 +20,19 @@ module sand_dollar::sand_dollar {
         token_type: u8
     }
 
-    /// Escrow storage - shared object
-    public struct EscrowStorage has key {
-        id: UID
-    }
-
     /// NFT representing escrowed BTC position
     public struct EscrowNFT has key, store {
         id: UID,
         name: String,
         description: String,
         url: Url,
+     //   escrow_id: ID,
     }
 
     /// Events
     public struct Escrow has key, store {
         id: UID,
+        escrow_balance: Balance<TokenType>,
         amount: u64,
         accumulated_amount: u64,
         claimed_amount: u64,
@@ -59,20 +56,10 @@ module sand_dollar::sand_dollar {
         owner_id: address,
     }
 
-    /// Initialize the escrow storage
-    fun init(ctx: &mut TxContext) {
-        let storage = EscrowStorage {
-            id: object::new(ctx)
-        };
-        transfer::share_object(storage);
-    }
-
-
     /// Entry function to create escrow
     public entry fun create_escrow(
         amount: u64,
         coin: &mut Coin<TokenType>,
-        storage: &mut EscrowStorage,
         ctx: &mut TxContext
     ){
         // Validate amount
@@ -81,75 +68,70 @@ module sand_dollar::sand_dollar {
         // Extract balance from coin
         let escrow_balance = coin::into_balance(coin::split(coin, amount, ctx));
 
+        let escrow_uid = object::new(ctx);
 
-
-        let escrowNFT = EscrowNFT {
+        let escrow_nft = EscrowNFT {
             id: object::new(ctx),
             name: string::utf8(b"Sand Dollar"),
             description: string::utf8(b"Sand Dollar"),
             url: url::new_unsafe_from_bytes(b"https://sanddollar.com"),
+    //        escrow_id: object::id(&escrow_uid),
         };
 
-        let escrow_id = object::id(&escrowNFT);
+        let escrow =   Escrow {
+            id: escrow_uid,
+            escrow_balance: escrow_balance,
+            amount,
+            accumulated_amount: 0,
+            claimed_amount: 0,
+            lock_start: 0,
+            lock_end: 0,
+            nft_id: object::id(&escrow_nft),
+        };
+
 
         // Emit event
         event::emit(EscrowCreated {
-            escrow_id,
+            escrow_id: object::id(&escrow),
             amount,
             token_type: TokenType { token_type: TOKEN_TYPE_WBTC },
             owner_id: tx_context::sender(ctx),
         });
-        // Store escrowed coins in secure storage
-        dynamic_field::add(&mut storage.id, escrow_id, escrow_balance);
 
 
+       transfer::share_object( escrow);
         // Transfer NFT to sender
-        transfer::transfer(escrowNFT, tx_context::sender(ctx));
+        transfer::transfer(escrow_nft, tx_context::sender(ctx));
 
     }
 
 
-    /// Entry function to redeem escrow
-    public entry fun redeem_escrow_entry<T>(
-        escrow: EscrowNFT,
-        storage: &mut EscrowStorage,
-        ctx: &mut TxContext
-    ) {
-        let escrow_id = object::id(&escrow);
-        let EscrowNFT { id, amount, token_type, timestamp: _ } = escrow;
+    // /// Entry function to redeem escrow
+    // public entry fun redeem_escrow_entry<T>(
+    //     escrowNFT: EscrowNFT,
+    //     storage: &mut EscrowStorage,
+    //     ctx: &mut TxContext
+    // ) {
+    //     let escrow_id = object::id(&escrow);
+    //     let EscrowNFT { id, amount, token_type, timestamp: _ } = escrowNFT;
 
-        // Get escrowed coins from storage
-        let escrow_balance = dynamic_field::remove(&mut storage.id, escrow_id);
+    //     // Get escrowed coins from storage
+    //     let escrow_balance = dynamic_field::remove(&mut storage.id, escrow_id);
 
-        // Create coin from balance
-        let coin: Coin<T> = coin::from_balance(escrow_balance, ctx);
+    //     // Create coin from balance
+    //     let coin: Coin<T> = coin::from_balance(escrow_balance, ctx);
 
-        // Emit event before burning
-        event::emit(EscrowRedeemed {
-            escrow_id,
-            amount,
-            token_type,
-            owner: tx_context::sender(ctx),
-        });
+    //     // Emit event before burning
+    //     event::emit(EscrowRedeemed {
+    //         escrow_id,
+    //         amount,
+    //         token_type,
+    //         owner: tx_context::sender(ctx),
+    //     });
 
-        transfer::public_transfer(coin, tx_context::sender(ctx));
+    //     transfer::public_transfer(coin, tx_context::sender(ctx));
 
-        // Burn NFT
-        object::delete(id);
-    }
-
-    #[test_only]
-    /// Initialize the escrow storage for testing
-    public fun init_for_testing(ctx: &mut TxContext): EscrowStorage {
-        EscrowStorage {
-            id: object::new(ctx)
-        }
-    }
-
-    #[test_only]
-    /// Clean up the escrow storage for testing
-    public fun cleanup_storage(storage: EscrowStorage) {
-        let EscrowStorage { id } = storage;
-        object::delete(id);
-    }
+    //     // Burn NFT
+    //     object::delete(id);
+    // }
 } 
