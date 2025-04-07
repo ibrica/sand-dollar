@@ -2,7 +2,7 @@
 module sand_dollar::sand_dollar {
     use sui::{dynamic_field, event} ;
     use sui::coin::{Self, Coin};
-    use sui::balance::{Balance};
+    use sui::balance::{Self, Balance};
     use std::string::{Self, String};
 
 
@@ -44,6 +44,7 @@ module sand_dollar::sand_dollar {
         lock_start: u64,
         lock_end: u64,
         nft_address: address, // linked NFT's ID
+        active: bool,
     }
 
     /// Events
@@ -88,6 +89,7 @@ module sand_dollar::sand_dollar {
             lock_start: 0,
             lock_end: 0,
             nft_address,
+            active: true,
         };
 
         let escrow_id = object::id(&escrow);
@@ -121,10 +123,10 @@ module sand_dollar::sand_dollar {
     /// Entry function to redeem escrow
     public entry fun redeem_escrow_entry<T>(
         escrowNFT: EscrowNFT,
-        escrow: Escrow,
+        escrow: &mut Escrow,
         ctx: &mut TxContext 
     ) {
-        assert!(object::id(&escrow) == escrowNFT.escrow_id, EInvalidEscrow);
+        assert!(object::id(escrow) == escrowNFT.escrow_id, EInvalidEscrow);
         
         // Destructure the escrow to get the balance
         let Escrow { 
@@ -136,16 +138,19 @@ module sand_dollar::sand_dollar {
             claimed_amount: _, 
             lock_start: _, 
             lock_end: _, 
-            nft_address: _ 
+            nft_address: _,
+            active: _,
         } = escrow;
 
+        let total_balance = balance::withdraw_all<TokenType>(escrow_balance);
+
         // Create coin from balance
-        let coin: Coin<TokenType> = coin::from_balance(escrow_balance, ctx);
+        let coin: Coin<TokenType> = coin::from_balance(total_balance, ctx);
 
         // Emit event before burning
         event::emit(EscrowRedeemed {
-            escrow_id: object::uid_to_inner(&id),
-            amount,
+            escrow_id: object::uid_to_inner(id),
+            amount: *amount,  // TODO: think a bit about this
             token_type: TokenType { token_type: TOKEN_TYPE_WBTC },
             owner_id: tx_context::sender(ctx),
         });
@@ -155,6 +160,6 @@ module sand_dollar::sand_dollar {
         // Burn NFT
         let EscrowNFT { id: nft_id, name: _, description: _, url: _, escrow_id: _ } = escrowNFT;
         object::delete(nft_id);
-        object::delete(id);
+        escrow.active = false;
     }
 } 
