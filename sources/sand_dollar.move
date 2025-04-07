@@ -40,7 +40,7 @@ public struct Escrow has key, store {
     claimed_amount: u64,
     lock_start: u64,
     lock_end: u64,
-    nft_address: address, // linked NFT's ID
+    nft_id: ID,
     active: bool,
 }
 
@@ -56,12 +56,11 @@ public struct EscrowRedeemed has copy, drop {
     escrow_id: ID,
     amount: u64,
     token_type: TokenType,
-    owner_id: address,
+    owner_address: address,
 }
 
 /// Entry function to create escrow
 public entry fun create_escrow(amount: u64, coin: &mut Coin<TokenType>, ctx: &mut TxContext) {
-    // Validate amount
     assert!(amount > 0, EInvalidAmount);
 
     // Extract balance from coin
@@ -70,7 +69,7 @@ public entry fun create_escrow(amount: u64, coin: &mut Coin<TokenType>, ctx: &mu
     let escrow_uid = object::new(ctx);
 
     let creator_address = tx_context::sender(ctx);
-    let nft_address = object::uid_to_address(&escrow_uid);
+    let nft_id = object::uid_to_inner(&escrow_uid);
 
     let escrow = Escrow {
         id: escrow_uid,
@@ -81,7 +80,7 @@ public entry fun create_escrow(amount: u64, coin: &mut Coin<TokenType>, ctx: &mu
         claimed_amount: 0,
         lock_start: 0,
         lock_end: 0,
-        nft_address,
+        nft_id,
         active: true,
     };
 
@@ -124,7 +123,7 @@ public entry fun redeem_escrow(escrowNFT: EscrowNFT, escrow: &mut Escrow, ctx: &
         claimed_amount: _,
         lock_start: _,
         lock_end: _,
-        nft_address: _,
+        nft_id: _,
         active: _,
     } = escrow;
 
@@ -138,7 +137,7 @@ public entry fun redeem_escrow(escrowNFT: EscrowNFT, escrow: &mut Escrow, ctx: &
         escrow_id: object::uid_to_inner(id),
         amount: *amount, // TODO: think a bit about this
         token_type: TokenType { token_type: TOKEN_TYPE_WBTC },
-        owner_id: tx_context::sender(ctx),
+        owner_address: tx_context::sender(ctx),
     });
 
     transfer::public_transfer(coin, tx_context::sender(ctx));
