@@ -2,6 +2,7 @@
 module sand_dollar::sand_dollar;
 
 use std::string::{Self, String};
+use std::type_name;
 use sui::balance::{Self, Balance};
 use sui::coin::{Self, Coin};
 use sui::dynamic_field;
@@ -12,13 +13,11 @@ use sui::url::{Self, Url};
 const EInvalidAmount: u64 = 0;
 const EInvalidEscrow: u64 = 2;
 const EInvalidSender: u64 = 3;
-/// Token type constants
-const TOKEN_TYPE_WBTC: u8 = 0;
-// const TOKEN_TYPE_LBTC: u8 = 1;
 
-/// Represents the type of BTC token being escrowed
-public struct TokenType has copy, drop, store {
-    token_type: u8,
+/// Token type enumss
+public enum TokenType has copy, drop, store {
+    WBTC,
+    LBTC,
 }
 
 /// NFT representing escrowed BTC position
@@ -60,11 +59,15 @@ public struct EscrowRedeemed has copy, drop {
 }
 
 /// Entry function to create escrow
-public entry fun create_escrow(amount: u64, coin: &mut Coin<TokenType>, ctx: &mut TxContext) {
+public entry fun create_escrow(
+    amount: u64,
+    escrow_coin: &mut Coin<TokenType>,
+    ctx: &mut TxContext,
+) {
     assert!(amount > 0, EInvalidAmount);
 
     // Extract balance from coin
-    let escrow_balance = coin::into_balance(coin::split(coin, amount, ctx));
+    let escrow_balance = coin::into_balance(coin::split(escrow_coin, amount, ctx));
 
     let escrow_uid = object::new(ctx);
 
@@ -98,7 +101,7 @@ public entry fun create_escrow(amount: u64, coin: &mut Coin<TokenType>, ctx: &mu
     event::emit(EscrowCreated {
         escrow_id,
         amount,
-        token_type: TokenType { token_type: TOKEN_TYPE_WBTC },
+        token_type: TokenType::WBTC, // TODO: change later for the real token types
         creator_address,
     });
 
@@ -136,7 +139,7 @@ public entry fun redeem_escrow(escrowNFT: EscrowNFT, escrow: &mut Escrow, ctx: &
     event::emit(EscrowRedeemed {
         escrow_id: object::uid_to_inner(id),
         amount: *amount, // TODO: think a bit about this
-        token_type: TokenType { token_type: TOKEN_TYPE_WBTC },
+        token_type: TokenType::WBTC, // TODO: change later for the real token types
         owner_address: tx_context::sender(ctx),
     });
 
