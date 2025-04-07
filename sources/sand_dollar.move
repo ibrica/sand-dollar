@@ -30,12 +30,13 @@ module sand_dollar::sand_dollar {
         name: String,
         description: String,
         url: Url,
-       escrow_id: ID,
+        escrow_id: ID,
     }
 
     /// Events
     public struct Escrow has key, store {
         id: UID,
+        creator_address: address,
         escrow_balance: Balance<TokenType>,
         amount: u64,
         accumulated_amount: u64,
@@ -50,7 +51,7 @@ module sand_dollar::sand_dollar {
         escrow_id: ID,
         amount: u64,
         token_type: TokenType,
-        owner_id: address,
+        creator_address: address,
     }
 
     public  struct EscrowRedeemed has copy, drop {
@@ -74,10 +75,12 @@ module sand_dollar::sand_dollar {
 
         let escrow_uid = object::new(ctx);
 
+        let creator_address = tx_context::sender(ctx);
 
         let escrow =   Escrow {
             id: escrow_uid,
-            escrow_balance: escrow_balance,
+            creator_address,
+            escrow_balance,
             amount,
             accumulated_amount: 0,
             claimed_amount: 0,
@@ -86,22 +89,24 @@ module sand_dollar::sand_dollar {
             nft_address: object::uid_to_address(&escrow_uid),
         };
 
+        let escrow_id = object::id(&escrow);
+
             let escrow_nft = EscrowNFT {
             id: object::new(ctx),
             name: string::utf8(b"Sand Dollar"),
             description: string::utf8(b"Sand Dollar"),
             url: url::new_unsafe_from_bytes(b"https://sanddollar.com"),
-            escrow_id: object::id(&escrow),
+            escrow_id,
         };
 
 
 
         // Emit event
         event::emit(EscrowCreated {
-            escrow_id: object::id(&escrow),
+            escrow_id,
             amount,
             token_type: TokenType { token_type: TOKEN_TYPE_WBTC },
-            owner_id: tx_context::sender(ctx),
+            creator_address,
         });
 
 
@@ -123,6 +128,7 @@ module sand_dollar::sand_dollar {
         // Destructure the escrow to get the balance
         let Escrow { 
             id, 
+            creator_address: _,
             escrow_balance, 
             amount, 
             accumulated_amount: _, 
