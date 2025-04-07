@@ -11,8 +11,9 @@ module sand_dollar::sand_dollar {
 
     /// Error codes
     const EInvalidAmount: u64 = 0;
-    // const EInvalidTokenType: u64 = 1;
-    // const EInvalidToken: u64 = 2;
+    const EInvalidTokenType: u64 = 1;
+    const EInvalidToken: u64 = 2;
+    const EInvalidEscrow: u64 = 3;
 
     /// Token type constants
     const TOKEN_TYPE_WBTC: u8 = 0;
@@ -114,30 +115,39 @@ module sand_dollar::sand_dollar {
     /// Entry function to redeem escrow
     public entry fun redeem_escrow_entry<T>(
         escrowNFT: EscrowNFT,
-        ctx: &mut TxContext
+        escrow: Escrow,
+        ctx: &mut TxContext 
     ) {
-        if (exists<Escrow>(escrowNFT.escrow_id)) {
-            let escrow = object::borrow_mut_global<Escrow>(escrowNFT.escrow_id);
-            let Escrow { id, amount, token_type, timestamp: _ } = escrow;
-
-        // Get escrowed coins from storage
-        let escrow_balance = dynamic_field::remove(&mut storage.id, escrow_id);
+        assert!(object::id(&escrow) == escrowNFT.escrow_id, EInvalidEscrow);
+        
+        // Destructure the escrow to get the balance
+        let Escrow { 
+            id, 
+            escrow_balance, 
+            amount, 
+            accumulated_amount: _, 
+            claimed_amount: _, 
+            lock_start: _, 
+            lock_end: _, 
+            nft_address: _ 
+        } = escrow;
 
         // Create coin from balance
-        let coin: Coin<T> = coin::from_balance(escrow_balance, ctx);
+        let coin: Coin<TokenType> = coin::from_balance(escrow_balance, ctx);
 
         // Emit event before burning
         event::emit(EscrowRedeemed {
-            escrow_id,
+            escrow_id: object::id(&escrow),
             amount,
-            token_type,
+            token_type: TokenType { token_type: TOKEN_TYPE_WBTC },
             owner_id: tx_context::sender(ctx),
         });
 
         transfer::public_transfer(coin, tx_context::sender(ctx));
 
         // Burn NFT
-            object::delete(id);
-        }
+        let EscrowNFT { id: nft_id, name: _, description: _, url: _, escrow_id: _ } = escrowNFT;
+        object::delete(nft_id);
+        object::delete(id);
     }
 } 
