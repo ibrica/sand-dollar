@@ -76,6 +76,7 @@ module sand_dollar::sand_dollar {
         let escrow_uid = object::new(ctx);
 
         let creator_address = tx_context::sender(ctx);
+        let nft_address = object::uid_to_address(&escrow_uid);
 
         let escrow =   Escrow {
             id: escrow_uid,
@@ -86,7 +87,7 @@ module sand_dollar::sand_dollar {
             claimed_amount: 0,
             lock_start: 0,
             lock_end: 0,
-            nft_address: object::uid_to_address(&escrow_uid),
+            nft_address,
         };
 
         let escrow_id = object::id(&escrow);
@@ -143,7 +144,7 @@ module sand_dollar::sand_dollar {
 
         // Emit event before burning
         event::emit(EscrowRedeemed {
-            escrow_id: object::id(&escrow),
+            escrow_id: object::uid_to_inner(&id),
             amount,
             token_type: TokenType { token_type: TOKEN_TYPE_WBTC },
             owner_id: tx_context::sender(ctx),
