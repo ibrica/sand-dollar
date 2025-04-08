@@ -3,7 +3,7 @@ module sand_dollar::sand_dollar_tests;
 
 use sand_dollar::sand_dollar::{Self, Escrow, EscrowNFT, TokenType};
 use sui::coin::{Self, Coin};
-use sui::test_scenario::{Self as test, Scenario};
+use sui::test_scenario::{Self as test, Scenario, EEmptyInventory};
 
 public struct DummyNFT has key, store {
     id: UID,
@@ -176,5 +176,33 @@ fun test_redeem_escrow_success_with_existing_nft() {
 
     coin::destroy_zero(coin);
     test::return_shared(escrow);
+    test::end(scenario);
+}
+
+#[test]
+#[expected_failure(abort_code = EEmptyInventory)]
+fun test_burn_escrow_nft() {
+    let mut scenario = setup_test();
+
+    test::next_tx(&mut scenario, USER);
+    let mut coin = create_test_coin(test::ctx(&mut scenario));
+
+    sand_dollar::create_escrow_mint_nft(
+        TEST_AMOUNT,
+        &mut coin,
+        test::ctx(&mut scenario),
+    );
+
+    test::next_tx(&mut scenario, USER);
+    let escrow_nft = test::take_from_address<EscrowNFT>(&scenario, USER);
+
+    sand_dollar::burn_escrow_nft(escrow_nft);
+
+    test::next_tx(&mut scenario, USER);
+    let burned_nft = test::take_from_address<EscrowNFT>(&scenario, USER); // This should fail with EEmptyInventory
+
+    test::return_to_address(USER, burned_nft);
+
+    coin::destroy_zero(coin);
     test::end(scenario);
 }
