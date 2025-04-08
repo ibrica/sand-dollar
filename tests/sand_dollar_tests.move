@@ -28,7 +28,7 @@ fun test_create_escrow_success() {
     let mut coin = create_test_coin(test::ctx(&mut scenario));
 
     // Create escrow
-    sand_dollar::create_escrow(
+    sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
         test::ctx(&mut scenario),
@@ -51,7 +51,7 @@ fun test_create_escrow_zero_amount() {
     let mut coin = create_test_coin(test::ctx(&mut scenario));
 
     // Try to create escrow with zero amount
-    sand_dollar::create_escrow(
+    sand_dollar::create_escrow_mint_nft(
         0,
         &mut coin,
         test::ctx(&mut scenario),
@@ -69,7 +69,7 @@ fun test_redeem_escrow_success() {
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
 
-    sand_dollar::create_escrow(
+    sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
         test::ctx(&mut scenario),
@@ -101,7 +101,7 @@ fun test_create_escrow_with_lbtc() {
     let mut coin = create_test_coin(test::ctx(&mut scenario));
 
     // Create escrow with LBTC
-    sand_dollar::create_escrow(
+    sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
         test::ctx(&mut scenario),
