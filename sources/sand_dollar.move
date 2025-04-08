@@ -162,3 +162,9 @@ public entry fun redeem_escrow<T: key + store>(nft: T, escrow: &mut Escrow, ctx:
 
     escrow.active = false;
 }
+
+/// Entry function to burn escrow NFT
+public entry fun burn_escrow_nft(nft: EscrowNFT) {
+    let EscrowNFT { id: nft_id, name: _, description: _, url: _ } = nft;
+    object::delete(nft_id);
+}
