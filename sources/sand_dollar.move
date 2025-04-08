@@ -4,6 +4,7 @@ module sand_dollar::sand_dollar;
 use std::string::{Self, String};
 use std::type_name;
 use sui::balance::{Self, Balance};
+use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
 use sui::dynamic_field;
 use sui::event;
@@ -58,45 +59,19 @@ public struct EscrowRedeemed has copy, drop {
     owner_address: address,
 }
 
-/// Entry function to create escrow with an existing NFT
-public entry fun create_escrow_with_nft<T: key + store>(
-    amount: u64,
-    escrow_coin: &mut Coin<TokenType>,
-    nft: T, // Object must be owned by the sender
-    ctx: &mut TxContext,
-) {
-    let nft_id = object::id(&nft);
-
-    create_escrow(amount, escrow_coin, nft_id, ctx);
-    transfer::public_transfer(nft, tx_context::sender(ctx)); // back to sender
-}
-
-/// Entry function to create escrow with a newly minted NFT
-public entry fun create_escrow_mint_nft(
-    amount: u64,
-    escrow_coin: &mut Coin<TokenType>,
-    ctx: &mut TxContext,
-) {
-    assert!(amount > 0, EInvalidAmount);
-
-    let escrow_nft = EscrowNFT {
-        id: object::new(ctx),
-        name: string::utf8(b"Sand Dollar"),
-        description: string::utf8(b"Sand Dollar"),
-        url: url::new_unsafe_from_bytes(b"https://sanddollar.com"),
-    };
-
-    create_escrow(amount, escrow_coin, object::id(&escrow_nft), ctx);
-
-    transfer::transfer(escrow_nft, tx_context::sender(ctx));
-}
-
 /// Helper function with shared logic to create escrow
-fun create_escrow(amount: u64, escrow_coin: &mut Coin<TokenType>, nft_id: ID, ctx: &mut TxContext) {
+fun create_escrow(
+    amount: u64,
+    escrow_coin: &mut Coin<TokenType>,
+    nft_id: ID,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
     assert!(amount > 0, EInvalidAmount);
 
     let escrow_balance = coin::into_balance(coin::split(escrow_coin, amount, ctx));
     let creator_address = tx_context::sender(ctx);
+    let current_time = clock::timestamp_ms(clock);
     let escrow = Escrow {
         id: object::new(ctx),
         creator_address,
@@ -104,7 +79,7 @@ fun create_escrow(amount: u64, escrow_coin: &mut Coin<TokenType>, nft_id: ID, ct
         amount,
         accumulated_amount: 0,
         claimed_amount: 0,
-        lock_start: 0,
+        lock_start: current_time,
         lock_end: 0,
         nft_id,
         active: true,
@@ -121,6 +96,41 @@ fun create_escrow(amount: u64, escrow_coin: &mut Coin<TokenType>, nft_id: ID, ct
     });
 
     transfer::share_object(escrow);
+}
+
+/// Entry function to create escrow with an existing NFT
+public entry fun create_escrow_with_nft<T: key + store>(
+    amount: u64,
+    escrow_coin: &mut Coin<TokenType>,
+    nft: T, // Object must be owned by the sender
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    let nft_id = object::id(&nft);
+
+    create_escrow(amount, escrow_coin, nft_id, clock, ctx);
+    transfer::public_transfer(nft, tx_context::sender(ctx)); // back to sender
+}
+
+/// Entry function to create escrow with a newly minted NFT
+public entry fun create_escrow_mint_nft(
+    amount: u64,
+    escrow_coin: &mut Coin<TokenType>,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    assert!(amount > 0, EInvalidAmount);
+
+    let escrow_nft = EscrowNFT {
+        id: object::new(ctx),
+        name: string::utf8(b"Sand Dollar"),
+        description: string::utf8(b"Sand Dollar"),
+        url: url::new_unsafe_from_bytes(b"https://sanddollar.com"),
+    };
+
+    create_escrow(amount, escrow_coin, object::id(&escrow_nft), clock, ctx);
+
+    transfer::transfer(escrow_nft, tx_context::sender(ctx));
 }
 
 /// Entry function to redeem escrow

@@ -2,6 +2,7 @@
 module sand_dollar::sand_dollar_tests;
 
 use sand_dollar::sand_dollar::{Self, Escrow, EscrowNFT, TokenType};
+use sui::clock;
 use sui::coin::{Self, Coin};
 use sui::test_scenario::{Self as test, Scenario, EEmptyInventory};
 
@@ -35,11 +36,13 @@ fun test_create_escrow_success() {
     // Create test coin
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
 
     // Create escrow
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        &clock,
         test::ctx(&mut scenario),
     );
 
@@ -47,6 +50,7 @@ fun test_create_escrow_success() {
     assert!(coin::value(&coin) == 0, 0);
 
     coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
     test::end(scenario);
 }
 
@@ -58,15 +62,18 @@ fun test_create_escrow_zero_amount() {
     // Create test coin
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
 
     // Try to create escrow with zero amount
     sand_dollar::create_escrow_mint_nft(
         0,
         &mut coin,
+        &clock,
         test::ctx(&mut scenario),
     );
 
     coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
     test::end(scenario);
 }
 
@@ -77,10 +84,12 @@ fun test_redeem_escrow_success() {
     // Create test coin and escrow
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
 
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        &clock,
         test::ctx(&mut scenario),
     );
 
@@ -97,6 +106,7 @@ fun test_redeem_escrow_success() {
     );
 
     coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
     test::return_shared(escrow);
     test::end(scenario);
 }
@@ -108,17 +118,20 @@ fun test_create_escrow_with_lbtc() {
     // Create test coin
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
 
     // Create escrow with LBTC
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        &clock,
         test::ctx(&mut scenario),
     );
 
     // Verify coin was split
     assert!(coin::value(&coin) == 0, 0);
     coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
 
     test::end(scenario);
 }
@@ -130,6 +143,7 @@ fun test_create_escrow_with_existing_nft() {
     // Create test coin
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
 
     let dummy_nft = create_test_dummy_nft(test::ctx(&mut scenario));
     // Create escrow with LBTC
@@ -137,12 +151,14 @@ fun test_create_escrow_with_existing_nft() {
         TEST_AMOUNT,
         &mut coin,
         dummy_nft,
+        &clock,
         test::ctx(&mut scenario),
     );
 
     // Verify coin was split
     assert!(coin::value(&coin) == 0, 0);
     coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
 
     test::end(scenario);
 }
@@ -154,11 +170,13 @@ fun test_redeem_escrow_success_with_existing_nft() {
     // Create test coin and escrow
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
 
     sand_dollar::create_escrow_with_nft(
         TEST_AMOUNT,
         &mut coin,
         dummy_nft,
+        &clock,
         test::ctx(&mut scenario),
     );
 
@@ -175,6 +193,7 @@ fun test_redeem_escrow_success_with_existing_nft() {
     );
 
     coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
     test::return_shared(escrow);
     test::end(scenario);
 }
@@ -186,10 +205,12 @@ fun test_burn_escrow_nft() {
 
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
 
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        &clock,
         test::ctx(&mut scenario),
     );
 
@@ -204,5 +225,6 @@ fun test_burn_escrow_nft() {
     test::return_to_address(USER, burned_nft);
 
     coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
     test::end(scenario);
 }
