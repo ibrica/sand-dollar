@@ -124,8 +124,8 @@ fun create_escrow(amount: u64, escrow_coin: &mut Coin<TokenType>, nft_id: ID, ct
 }
 
 /// Entry function to redeem escrow
-public entry fun redeem_escrow(escrow_nft: EscrowNFT, escrow: &mut Escrow, ctx: &mut TxContext) {
-    assert!(object::id(&escrow_nft) == escrow.nft_id, EInvalidEscrow);
+public entry fun redeem_escrow<T: key + store>(nft: T, escrow: &mut Escrow, ctx: &mut TxContext) {
+    assert!(object::id(&nft) == escrow.nft_id, EInvalidEscrow);
     assert!(escrow.active, EInactiveEscrow);
     assert!(tx_context::sender(ctx) == escrow.creator_address, EInvalidSender);
 
@@ -158,8 +158,7 @@ public entry fun redeem_escrow(escrow_nft: EscrowNFT, escrow: &mut Escrow, ctx: 
 
     transfer::public_transfer(coin, tx_context::sender(ctx));
 
-    // Burn NFT
-    let EscrowNFT { id: nft_id, name: _, description: _, url: _ } = escrow_nft;
-    object::delete(nft_id);
+    transfer::public_transfer(nft, tx_context::sender(ctx));
+
     escrow.active = false;
 }

@@ -5,6 +5,10 @@ use sand_dollar::sand_dollar::{Self, Escrow, EscrowNFT, TokenType};
 use sui::coin::{Self, Coin};
 use sui::test_scenario::{Self as test, Scenario};
 
+public struct DummyNFT has key, store {
+    id: UID,
+}
+
 // Test constants
 const USER: address = @0xA;
 const TEST_AMOUNT: u64 = 1000;
@@ -12,6 +16,11 @@ const TEST_AMOUNT: u64 = 1000;
 // Test helper function to create a test coin
 fun create_test_coin(ctx: &mut TxContext): Coin<TokenType> {
     coin::mint_for_testing<TokenType>(TEST_AMOUNT, ctx)
+}
+
+// Test helper function to create a test coin
+fun create_test_dummy_nft(ctx: &mut TxContext): DummyNFT {
+    DummyNFT { id: object::new(ctx) }
 }
 
 // Test helper function to setup test scenario
@@ -111,5 +120,61 @@ fun test_create_escrow_with_lbtc() {
     assert!(coin::value(&coin) == 0, 0);
     coin::destroy_zero(coin);
 
+    test::end(scenario);
+}
+
+#[test]
+fun test_create_escrow_with_existing_nft() {
+    let mut scenario = setup_test();
+
+    // Create test coin
+    test::next_tx(&mut scenario, USER);
+    let mut coin = create_test_coin(test::ctx(&mut scenario));
+
+    let dummy_nft = create_test_dummy_nft(test::ctx(&mut scenario));
+    // Create escrow with LBTC
+    sand_dollar::create_escrow_with_nft(
+        TEST_AMOUNT,
+        &mut coin,
+        dummy_nft,
+        test::ctx(&mut scenario),
+    );
+
+    // Verify coin was split
+    assert!(coin::value(&coin) == 0, 0);
+    coin::destroy_zero(coin);
+
+    test::end(scenario);
+}
+
+#[test]
+fun test_redeem_escrow_success_with_existing_nft() {
+    let mut scenario = setup_test();
+    let dummy_nft = create_test_dummy_nft(test::ctx(&mut scenario));
+    // Create test coin and escrow
+    test::next_tx(&mut scenario, USER);
+    let mut coin = create_test_coin(test::ctx(&mut scenario));
+
+    sand_dollar::create_escrow_with_nft(
+        TEST_AMOUNT,
+        &mut coin,
+        dummy_nft,
+        test::ctx(&mut scenario),
+    );
+
+    // Get the escrow NFT
+    test::next_tx(&mut scenario, USER);
+    let dummy_nft = test::take_from_address<DummyNFT>(&scenario, USER);
+    let mut escrow = test::take_shared<Escrow>(&scenario);
+
+    // Redeem the escrow
+    sand_dollar::redeem_escrow(
+        dummy_nft,
+        &mut escrow,
+        test::ctx(&mut scenario),
+    );
+
+    coin::destroy_zero(coin);
+    test::return_shared(escrow);
     test::end(scenario);
 }
