@@ -10,6 +10,9 @@ use sui::dynamic_field;
 use sui::event;
 use sui::url::{Self, Url};
 
+/// Constants
+const LOCK_PERIOD: u64 = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
+
 /// Error codes
 const EInvalidAmount: u64 = 0;
 const EInvalidEscrow: u64 = 2;
@@ -50,6 +53,8 @@ public struct EscrowCreated has copy, drop {
     amount: u64,
     token_type: TokenType,
     creator_address: address,
+    lock_start: u64,
+    lock_end: u64,
 }
 
 public struct EscrowRedeemed has copy, drop {
@@ -71,9 +76,8 @@ fun create_escrow(
 
     let escrow_balance = coin::into_balance(coin::split(escrow_coin, amount, ctx));
     let creator_address = tx_context::sender(ctx);
-    let current_time = clock::timestamp_ms(clock);
-    let one_year_ms = 365 * 24 * 60 * 60 * 1000;
-    let lock_end = current_time + one_year_ms;
+    let lock_start = clock::timestamp_ms(clock); // Current time
+    let lock_end = lock_start + LOCK_PERIOD;
 
     let escrow = Escrow {
         id: object::new(ctx),
@@ -82,7 +86,7 @@ fun create_escrow(
         amount,
         accumulated_amount: 0,
         claimed_amount: 0,
-        lock_start: current_time,
+        lock_start,
         lock_end,
         nft_id,
         active: true,
@@ -95,6 +99,8 @@ fun create_escrow(
         amount,
         token_type: TokenType::WBTC, // TODO: change later for the real token types
         creator_address,
+        lock_start,
+        lock_end,
     });
 
     transfer::share_object(escrow);
