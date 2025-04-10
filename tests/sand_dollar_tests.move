@@ -13,6 +13,7 @@ public struct DummyNFT has key, store {
 // Test constants
 const USER: address = @0xA;
 const TEST_AMOUNT: u64 = 1000;
+const LOCK_PERIOD: u64 = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
 
 // Test helper function to create a test coin
 fun create_test_coin(ctx: &mut TxContext): Coin<TokenType> {
@@ -78,13 +79,13 @@ fun test_create_escrow_zero_amount() {
 }
 
 #[test]
-fun test_redeem_escrow_success() {
+fun test_redeem_escrow() {
     let mut scenario = setup_test();
 
     // Create test coin and escrow
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
-    let clock = clock::create_for_testing(test::ctx(&mut scenario));
+    let mut clock = clock::create_for_testing(test::ctx(&mut scenario));
 
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
@@ -97,6 +98,9 @@ fun test_redeem_escrow_success() {
     test::next_tx(&mut scenario, USER);
     let escrow_nft = test::take_from_address<EscrowNFT>(&scenario, USER);
     let mut escrow = test::take_shared<Escrow>(&scenario);
+
+    // Create a new clock for redemption attempt
+    clock::increment_for_testing(&mut clock, 1000 + LOCK_PERIOD + 1);
 
     // Redeem the escrow
     sand_dollar::redeem_escrow(
@@ -165,13 +169,13 @@ fun test_create_escrow_with_existing_nft() {
 }
 
 #[test]
-fun test_redeem_escrow_success_with_existing_nft() {
+fun test_redeem_escrow_with_existing_nft() {
     let mut scenario = setup_test();
     let dummy_nft = create_test_dummy_nft(test::ctx(&mut scenario));
     // Create test coin and escrow
     test::next_tx(&mut scenario, USER);
     let mut coin = create_test_coin(test::ctx(&mut scenario));
-    let clock = clock::create_for_testing(test::ctx(&mut scenario));
+    let mut clock = clock::create_for_testing(test::ctx(&mut scenario));
 
     sand_dollar::create_escrow_with_nft(
         TEST_AMOUNT,
@@ -185,6 +189,9 @@ fun test_redeem_escrow_success_with_existing_nft() {
     test::next_tx(&mut scenario, USER);
     let dummy_nft = test::take_from_address<DummyNFT>(&scenario, USER);
     let mut escrow = test::take_shared<Escrow>(&scenario);
+
+    // Create a new clock for redemption attempt
+    clock::increment_for_testing(&mut clock, 1000 + LOCK_PERIOD + 1);
 
     // Redeem the escrow
     sand_dollar::redeem_escrow(
@@ -228,5 +235,83 @@ fun test_burn_escrow_nft() {
 
     coin::destroy_zero(coin);
     clock::destroy_for_testing(clock);
+    test::end(scenario);
+}
+
+#[test]
+#[expected_failure(abort_code = sand_dollar::ELockedEscrow)]
+fun test_redeem_escrow_before_lock_expiry() {
+    let mut scenario = setup_test();
+
+    // Create test coin and initial clock
+    test::next_tx(&mut scenario, USER);
+    let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let mut clock = clock::create_for_testing(test::ctx(&mut scenario));
+
+    // Create escrow - this will set lock_start to current timestamp and lock_end to lock_start + LOCK_PERIOD
+    sand_dollar::create_escrow_mint_nft(
+        TEST_AMOUNT,
+        &mut coin,
+        &clock,
+        test::ctx(&mut scenario),
+    );
+
+    // Get the escrow NFT
+    test::next_tx(&mut scenario, USER);
+    let escrow_nft = test::take_from_address<EscrowNFT>(&scenario, USER);
+    let mut escrow = test::take_shared<Escrow>(&scenario);
+
+    clock::increment_for_testing(&mut clock, 100_000);
+    // Try to redeem the escrow (should fail as lock hasn't expired)
+    sand_dollar::redeem_escrow(
+        escrow_nft,
+        &mut escrow,
+        &clock,
+        test::ctx(&mut scenario),
+    );
+
+    coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
+    test::return_shared(escrow);
+    test::end(scenario);
+}
+
+// Add a test to verify successful redemption after lock expiry
+#[test]
+fun test_redeem_escrow_after_lock_expiry() {
+    let mut scenario = setup_test();
+
+    // Create test coin and initial clock
+    test::next_tx(&mut scenario, USER);
+    let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let mut clock = clock::create_for_testing(test::ctx(&mut scenario));
+
+    // Create escrow - this will set lock_start to current timestamp and lock_end to lock_start + LOCK_PERIOD
+    sand_dollar::create_escrow_mint_nft(
+        TEST_AMOUNT,
+        &mut coin,
+        &clock,
+        test::ctx(&mut scenario),
+    );
+
+    // Get the escrow NFT
+    test::next_tx(&mut scenario, USER);
+    let escrow_nft = test::take_from_address<EscrowNFT>(&scenario, USER);
+    let mut escrow = test::take_shared<Escrow>(&scenario);
+
+    // Create a new clock for redemption attempt with timestamp 1000 + LOCK_PERIOD + 1
+    clock::increment_for_testing(&mut clock, 1000 + LOCK_PERIOD + 1);
+
+    // Try to redeem the escrow (should succeed as lock has expired)
+    sand_dollar::redeem_escrow(
+        escrow_nft,
+        &mut escrow,
+        &clock,
+        test::ctx(&mut scenario),
+    );
+
+    coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
+    test::return_shared(escrow);
     test::end(scenario);
 }

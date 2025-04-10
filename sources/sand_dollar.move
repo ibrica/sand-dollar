@@ -76,7 +76,7 @@ fun create_escrow(
 
     let escrow_balance = coin::into_balance(coin::split(escrow_coin, amount, ctx));
     let creator_address = tx_context::sender(ctx);
-    let lock_start = clock::timestamp_ms(clock); // Current time
+    let lock_start = clock::timestamp_ms(clock);
     let lock_end = lock_start + LOCK_PERIOD;
 
     let escrow = Escrow {
@@ -166,7 +166,7 @@ public entry fun redeem_escrow<T: key + store>(
         active: _,
     } = escrow;
 
-    assert!(clock::timestamp_ms(clock) < *lock_end, ELockedEscrow);
+    assert!(clock::timestamp_ms(clock) >= *lock_end, ELockedEscrow);
 
     let total_balance = balance::withdraw_all<TokenType>(escrow_balance);
 
