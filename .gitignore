@@ -24,3 +24,4 @@ Thumbs.db
 # Sui specific
 sui.log
 sui.log.* 
+.coverage_map.*
