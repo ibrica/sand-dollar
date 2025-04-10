@@ -15,6 +15,7 @@ const EInvalidAmount: u64 = 0;
 const EInvalidEscrow: u64 = 2;
 const EInvalidSender: u64 = 3;
 const EInactiveEscrow: u64 = 4;
+const ELockedEscrow: u64 = 5;
 
 /// Token type enumss
 public enum TokenType has copy, drop, store {
@@ -30,7 +31,6 @@ public struct EscrowNFT has key, store {
     url: Url,
 }
 
-/// Events
 public struct Escrow has key, store {
     id: UID,
     creator_address: address,
@@ -72,6 +72,9 @@ fun create_escrow(
     let escrow_balance = coin::into_balance(coin::split(escrow_coin, amount, ctx));
     let creator_address = tx_context::sender(ctx);
     let current_time = clock::timestamp_ms(clock);
+    let one_year_ms = 365 * 24 * 60 * 60 * 1000;
+    let lock_end = current_time + one_year_ms;
+
     let escrow = Escrow {
         id: object::new(ctx),
         creator_address,
@@ -80,14 +83,13 @@ fun create_escrow(
         accumulated_amount: 0,
         claimed_amount: 0,
         lock_start: current_time,
-        lock_end: 0,
+        lock_end,
         nft_id,
         active: true,
     };
 
     let escrow_id = object::id(&escrow);
 
-    // Emit event
     event::emit(EscrowCreated {
         escrow_id,
         amount,
@@ -134,7 +136,12 @@ public entry fun create_escrow_mint_nft(
 }
 
 /// Entry function to redeem escrow
-public entry fun redeem_escrow<T: key + store>(nft: T, escrow: &mut Escrow, ctx: &mut TxContext) {
+public entry fun redeem_escrow<T: key + store>(
+    nft: T,
+    escrow: &mut Escrow,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
     assert!(object::id(&nft) == escrow.nft_id, EInvalidEscrow);
     assert!(escrow.active, EInactiveEscrow);
     assert!(tx_context::sender(ctx) == escrow.creator_address, EInvalidSender);
@@ -148,10 +155,12 @@ public entry fun redeem_escrow<T: key + store>(nft: T, escrow: &mut Escrow, ctx:
         accumulated_amount: _,
         claimed_amount: _,
         lock_start: _,
-        lock_end: _,
+        lock_end,
         nft_id: _,
         active: _,
     } = escrow;
+
+    assert!(clock::timestamp_ms(clock) < *lock_end, ELockedEscrow);
 
     let total_balance = balance::withdraw_all<TokenType>(escrow_balance);
 
