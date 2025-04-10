@@ -102,6 +102,7 @@ fun test_redeem_escrow_success() {
     sand_dollar::redeem_escrow(
         escrow_nft,
         &mut escrow,
+        &clock,
         test::ctx(&mut scenario),
     );
 
@@ -189,6 +190,7 @@ fun test_redeem_escrow_success_with_existing_nft() {
     sand_dollar::redeem_escrow(
         dummy_nft,
         &mut escrow,
+        &clock,
         test::ctx(&mut scenario),
     );
 
