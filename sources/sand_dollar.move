@@ -38,16 +38,17 @@ public enum YieldProvider has copy, drop, store {
 
 /// Helper function to get token type from coin
 fun get_token_type<T>(_coin: &Coin<T>): TokenType {
-    let type_name = type_name::get<T>().into_string().as_bytes();
+    let type_name = type_name::get<T>();
+    let type_name_bytes = type_name::into_string(type_name).as_bytes();
     if (
-        type_name == b"0x027792d9fed7f9844eb4839566001bb6f6cb4804f66aa2da6fe1ee242d896881::coin::COIN"
+        type_name_bytes == b"0x027792d9fed7f9844eb4839566001bb6f6cb4804f66aa2da6fe1ee242d896881::coin::COIN"
     ) {
         TokenType::WBTC
     } else if (
-        type_name == b"0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC"
+        type_name_bytes == b"0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC"
     ) {
         TokenType::LBTC
-    } else if (type_name == b"0x2::sui::SUI") {
+    } else if (type_name == type_name::get<SUI>()) {
         TokenType::SUI
     } else {
         abort EUnsupportedTokenType
