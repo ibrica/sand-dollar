@@ -24,6 +24,12 @@ const ELockedEscrow: u64 = 5;
 public enum TokenType has copy, drop, store {
     WBTC,
     LBTC,
+    SUI,
+}
+
+public enum YieldProvider has copy, drop, store {
+    None,
+    Navi,
 }
 
 /// NFT representing escrowed BTC position
@@ -44,6 +50,7 @@ public struct Escrow has key, store {
     lock_start: u64,
     lock_end: u64,
     nft_id: ID,
+    yield_provider: YieldProvider,
     active: bool,
 }
 
@@ -69,6 +76,7 @@ fun create_escrow(
     amount: u64,
     escrow_coin: &mut Coin<TokenType>,
     nft_id: ID,
+    yield_provider: YieldProvider,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
@@ -89,6 +97,7 @@ fun create_escrow(
         lock_start,
         lock_end,
         nft_id,
+        yield_provider,
         active: true,
     };
 
@@ -111,12 +120,13 @@ public entry fun create_escrow_with_nft<T: key + store>(
     amount: u64,
     escrow_coin: &mut Coin<TokenType>,
     nft: T, // Object must be owned by the sender
+    yield_provider: YieldProvider,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
     let nft_id = object::id(&nft);
 
-    create_escrow(amount, escrow_coin, nft_id, clock, ctx);
+    create_escrow(amount, escrow_coin, nft_id, yield_provider, clock, ctx);
     transfer::public_transfer(nft, tx_context::sender(ctx)); // back to sender
 }
 
