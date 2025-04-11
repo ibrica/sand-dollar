@@ -139,10 +139,10 @@ fun create_escrow<T>(
 }
 
 /// Entry function to create escrow with an existing NFT
-public entry fun create_escrow_with_nft<T: key + store>(
+public entry fun create_escrow_with_nft<NftType: key + store, T>(
     amount: u64,
     escrow_coin: &mut Coin<T>,
-    nft: T, // Object must be owned by the sender
+    nft: NftType, // Object must be owned by the sender
     yield_provider_value: u8,
     clock: &Clock,
     ctx: &mut TxContext,
@@ -178,8 +178,8 @@ public entry fun create_escrow_mint_nft<T>(
 }
 
 /// Entry function to redeem escrow
-public entry fun redeem_escrow<T: key + store>(
-    nft: T,
+public entry fun redeem_escrow<NftType: key + store, T>(
+    nft: NftType,
     escrow: &mut Escrow<T>,
     clock: &Clock,
     ctx: &mut TxContext,
