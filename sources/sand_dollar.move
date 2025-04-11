@@ -215,7 +215,7 @@ public entry fun redeem_escrow<NftType: key + store, T>(
     event::emit(EscrowRedeemed {
         escrow_id: object::uid_to_inner(id),
         amount: *amount,
-        token_type: TokenType::WBTC, // TODO: get actual token type from balance
+        token_type: get_token_type(&coin),
         owner_address: tx_context::sender(ctx),
     });
 
