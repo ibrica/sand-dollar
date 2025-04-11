@@ -1,6 +1,7 @@
 #[allow(unused_use)]
 module sand_dollar::sand_dollar;
 
+use std::ascii::String as AsciiString;
 use std::string::{Self, String};
 use std::type_name;
 use sui::balance::{Self, Balance};
@@ -23,35 +24,24 @@ const ELockedEscrow: u64 = 5;
 const EInvalidYieldProvider: u64 = 6;
 const EUnsupportedTokenType: u64 = 7;
 
-/// Token type enum
-public enum TokenType has copy, drop, store {
-    WBTC,
-    LBTC,
-    SUI,
-}
-
 /// Yield provider enum
 public enum YieldProvider has copy, drop, store {
     None,
     Navi,
 }
 
-/// Helper function to get token type from coin
-fun get_token_type<T>(_coin: &Coin<T>): TokenType {
+/// Helper function to validate token type from coin
+fun is_valid_token_type<T>(_coin: &Coin<T>): bool {
     let type_name = type_name::get<T>();
     let type_name_bytes = type_name::into_string(type_name).as_bytes();
     if (
-        type_name_bytes == b"0x027792d9fed7f9844eb4839566001bb6f6cb4804f66aa2da6fe1ee242d896881::coin::COIN"
+        type_name_bytes == b"0x027792d9fed7f9844eb4839566001bb6f6cb4804f66aa2da6fe1ee242d896881::coin::COIN" ||
+        type_name_bytes == b"0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC" ||
+        type_name == type_name::get<SUI>()
     ) {
-        TokenType::WBTC
-    } else if (
-        type_name_bytes == b"0x3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC"
-    ) {
-        TokenType::LBTC
-    } else if (type_name == type_name::get<SUI>()) {
-        TokenType::SUI
+        true
     } else {
-        abort EUnsupportedTokenType
+        false
     }
 }
 
@@ -81,7 +71,7 @@ public struct Escrow<phantom T> has key, store {
 public struct EscrowCreated has copy, drop {
     escrow_id: ID,
     amount: u64,
-    token_type: TokenType,
+    token_type: AsciiString,
     creator_address: address,
     lock_start: u64,
     lock_end: u64,
@@ -90,7 +80,7 @@ public struct EscrowCreated has copy, drop {
 public struct EscrowRedeemed has copy, drop {
     escrow_id: ID,
     amount: u64,
-    token_type: TokenType,
+    token_type: AsciiString,
     owner_address: address,
 }
 
@@ -104,8 +94,8 @@ fun create_escrow<T>(
     ctx: &mut TxContext,
 ) {
     assert!(amount > 0, EInvalidAmount);
+    assert!(is_valid_token_type<T>(escrow_coin), EUnsupportedTokenType);
 
-    let token_type = get_token_type(escrow_coin);
     let escrow_balance = coin::into_balance(coin::split(escrow_coin, amount, ctx));
     let creator_address = tx_context::sender(ctx);
     let lock_start = clock::timestamp_ms(clock);
@@ -130,7 +120,7 @@ fun create_escrow<T>(
     event::emit(EscrowCreated {
         escrow_id,
         amount,
-        token_type,
+        token_type: type_name::get<T>().into_string(),
         creator_address,
         lock_start,
         lock_end,
@@ -215,7 +205,7 @@ public entry fun redeem_escrow<NftType: key + store, T>(
     event::emit(EscrowRedeemed {
         escrow_id: object::uid_to_inner(id),
         amount: *amount,
-        token_type: get_token_type(&coin),
+        token_type: type_name::get<T>().into_string(),
         owner_address: tx_context::sender(ctx),
     });
 
