@@ -39,11 +39,6 @@ dependencies = [
   { id = "supra_validator", name = "supra_validator" },
 ]
 
-[move.toolchain-version]
-compiler-version = "1.46.0"
-edition = "2024.beta"
-flavor = "sui"
-
 [[move.package]]
 id = "Wormhole"
 source = { git = "https://github.com/naviprotocol/wormhole.git", rev = "navi-forked", subdir = "sui/wormhole" }
@@ -105,3 +100,8 @@ source = { git = "https://github.com/naviprotocol/protocol-interface.git", rev =
 dependencies = [
   { id = "Sui", name = "Sui" },
 ]
+
+[move.toolchain-version]
+compiler-version = "1.46.0"
+edition = "2024.beta"
+flavor = "sui"

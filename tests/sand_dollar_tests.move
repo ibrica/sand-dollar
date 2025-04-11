@@ -43,6 +43,7 @@ fun test_create_escrow_success() {
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -69,6 +70,7 @@ fun test_create_escrow_zero_amount() {
     sand_dollar::create_escrow_mint_nft(
         0,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -90,6 +92,7 @@ fun test_redeem_escrow() {
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -129,6 +132,7 @@ fun test_create_escrow_with_lbtc() {
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -156,6 +160,7 @@ fun test_create_escrow_with_existing_nft() {
         TEST_AMOUNT,
         &mut coin,
         dummy_nft,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -181,6 +186,7 @@ fun test_redeem_escrow_with_existing_nft() {
         TEST_AMOUNT,
         &mut coin,
         dummy_nft,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -219,6 +225,7 @@ fun test_burn_escrow_nft() {
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -252,6 +259,7 @@ fun test_redeem_escrow_before_lock_expiry() {
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -290,6 +298,7 @@ fun test_redeem_escrow_after_lock_expiry() {
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -329,6 +338,7 @@ fun test_redeem_escrow_wrong_nft() {
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -367,6 +377,7 @@ fun test_redeem_escrow_inactive() {
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -418,6 +429,7 @@ fun test_redeem_escrow_wrong_sender() {
     sand_dollar::create_escrow_mint_nft(
         TEST_AMOUNT,
         &mut coin,
+        0, // YieldProvider::None
         &clock,
         test::ctx(&mut scenario),
     );
@@ -442,5 +454,81 @@ fun test_redeem_escrow_wrong_sender() {
     coin::destroy_zero(coin);
     clock::destroy_for_testing(clock);
     test::return_shared(escrow);
+    test::end(scenario);
+}
+
+#[test]
+#[expected_failure(abort_code = sand_dollar::EInvalidYieldProvider)]
+fun test_create_escrow_invalid_yield_provider() {
+    let mut scenario = setup_test();
+
+    // Create test coin
+    test::next_tx(&mut scenario, USER);
+    let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
+
+    // Try to create escrow with invalid yield provider value
+    sand_dollar::create_escrow_mint_nft(
+        TEST_AMOUNT,
+        &mut coin,
+        2, // Invalid yield provider value
+        &clock,
+        test::ctx(&mut scenario),
+    );
+
+    coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
+    test::end(scenario);
+}
+
+#[test]
+fun test_create_escrow_with_navi_yield_provider() {
+    let mut scenario = setup_test();
+
+    // Create test coin
+    test::next_tx(&mut scenario, USER);
+    let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
+
+    // Create escrow with Navi yield provider
+    sand_dollar::create_escrow_mint_nft(
+        TEST_AMOUNT,
+        &mut coin,
+        1, // YieldProvider::Navi
+        &clock,
+        test::ctx(&mut scenario),
+    );
+
+    // Verify coin was split
+    assert!(coin::value(&coin) == 0, 0);
+
+    coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
+    test::end(scenario);
+}
+
+#[test]
+fun test_create_escrow_with_none_yield_provider() {
+    let mut scenario = setup_test();
+
+    // Create test coin
+    test::next_tx(&mut scenario, USER);
+    let mut coin = create_test_coin(test::ctx(&mut scenario));
+    let clock = clock::create_for_testing(test::ctx(&mut scenario));
+
+    // Create escrow with None yield provider
+    sand_dollar::create_escrow_mint_nft(
+        TEST_AMOUNT,
+        &mut coin,
+        0, // YieldProvider::None
+        &clock,
+        test::ctx(&mut scenario),
+    );
+
+    // Verify coin was split
+    assert!(coin::value(&coin) == 0, 0);
+
+    coin::destroy_zero(coin);
+    clock::destroy_for_testing(clock);
     test::end(scenario);
 }

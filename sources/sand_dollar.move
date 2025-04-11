@@ -19,6 +19,7 @@ const EInvalidEscrow: u64 = 2;
 const EInvalidSender: u64 = 3;
 const EInactiveEscrow: u64 = 4;
 const ELockedEscrow: u64 = 5;
+const EInvalidYieldProvider: u64 = 6;
 
 /// Token type enumss
 public enum TokenType has copy, drop, store {
@@ -115,16 +116,27 @@ fun create_escrow(
     transfer::share_object(escrow);
 }
 
+/// Helper function to convert u8 to YieldProvider
+fun yield_provider_from_u8(value: u8): YieldProvider {
+    assert!(value <= 1, EInvalidYieldProvider);
+    if (value == 0) {
+        YieldProvider::None
+    } else {
+        YieldProvider::Navi
+    }
+}
+
 /// Entry function to create escrow with an existing NFT
 public entry fun create_escrow_with_nft<T: key + store>(
     amount: u64,
     escrow_coin: &mut Coin<TokenType>,
     nft: T, // Object must be owned by the sender
-    yield_provider: YieldProvider,
+    yield_provider_value: u8,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
     let nft_id = object::id(&nft);
+    let yield_provider = yield_provider_from_u8(yield_provider_value);
 
     create_escrow(amount, escrow_coin, nft_id, yield_provider, clock, ctx);
     transfer::public_transfer(nft, tx_context::sender(ctx)); // back to sender
@@ -134,6 +146,7 @@ public entry fun create_escrow_with_nft<T: key + store>(
 public entry fun create_escrow_mint_nft(
     amount: u64,
     escrow_coin: &mut Coin<TokenType>,
+    yield_provider_value: u8,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
@@ -146,7 +159,8 @@ public entry fun create_escrow_mint_nft(
         url: url::new_unsafe_from_bytes(b"https://sanddollar.com"),
     };
 
-    create_escrow(amount, escrow_coin, object::id(&escrow_nft), clock, ctx);
+    let yield_provider = yield_provider_from_u8(yield_provider_value);
+    create_escrow(amount, escrow_coin, object::id(&escrow_nft), yield_provider, clock, ctx);
 
     transfer::transfer(escrow_nft, tx_context::sender(ctx));
 }
@@ -173,6 +187,7 @@ public entry fun redeem_escrow<T: key + store>(
         lock_start: _,
         lock_end,
         nft_id: _,
+        yield_provider: _,
         active: _,
     } = escrow;
 
