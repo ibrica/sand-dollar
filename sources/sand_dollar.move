@@ -1,6 +1,8 @@
 #[allow(unused_use)]
 module sand_dollar::sand_dollar;
 
+use lending_core::account::AccountCap;
+use lending_core::lending;
 use std::ascii::String as AsciiString;
 use std::string::{Self, String};
 use std::type_name;
@@ -65,6 +67,7 @@ public struct Escrow<phantom T> has key, store {
     lock_end: u64,
     nft_id: ID,
     yield_provider: YieldProvider,
+    navi_account_cap: Option<AccountCap>,
     active: bool,
 }
 
@@ -102,6 +105,12 @@ fun create_escrow<T>(
     let lock_start = clock::timestamp_ms(clock);
     let lock_end = lock_start + LOCK_PERIOD;
 
+    let navi_account_cap: Option<AccountCap> = if (yield_provider == YieldProvider::Navi) {
+        option::some(lending::create_account(ctx))
+    } else {
+        option::none()
+    };
+
     let escrow = Escrow<T> {
         id: object::new(ctx),
         creator_address,
@@ -113,6 +122,7 @@ fun create_escrow<T>(
         lock_end,
         nft_id,
         yield_provider,
+        navi_account_cap,
         active: true,
     };
 
@@ -192,6 +202,7 @@ public entry fun redeem_escrow<NftType: key + store, T>(
         lock_end,
         nft_id: _,
         yield_provider: _,
+        navi_account_cap: _,
         active: _,
     } = escrow;
 
