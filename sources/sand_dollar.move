@@ -28,6 +28,7 @@ const EUnsupportedTokenType: u64 = 7;
 public enum YieldProvider has copy, drop, store {
     None,
     Navi,
+    SuiLend,
 }
 
 /// Helper function to validate token type from coin
@@ -229,4 +230,19 @@ fun yield_provider_from_u8(value: u8): YieldProvider {
     } else {
         YieldProvider::Navi
     }
+}
+
+/// Deposit coins to get a yield
+///
+public fun deposit_coins<T>(
+    coin_balance: &mut Balance<T>,
+    yield_provider: YieldProvider,
+    ctx: &mut TxContext,
+) {
+    if (yield_provider == YieldProvider::None) {
+        return
+    } else if (yield_provider == YieldProvider::Navi) {
+        let deposit_balance = balance::withdraw_all<T>(coin_balance);
+        let coin: Coin<T> = coin::from_balance<T>(deposit_balance, ctx);
+    } else {}
 }
