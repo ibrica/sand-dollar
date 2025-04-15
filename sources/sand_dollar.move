@@ -103,17 +103,17 @@ public struct EscrowRedeemed has copy, drop {
 
 /// Helper function with shared logic to create escrow
 fun create_escrow<T>(
-    amount: u64,
-    escrow_coin: &mut Coin<T>,
+    escrow_coin: Coin<T>,
     nft_id: ID,
     yield_provider: YieldProvider,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+    let amount = coin::value(&escrow_coin);
     assert!(amount > 0, EInvalidAmount);
-    assert!(is_valid_token_type<T>(escrow_coin), EUnsupportedTokenType);
+    assert!(is_valid_token_type<T>(&escrow_coin), EUnsupportedTokenType);
 
-    let escrow_balance = coin::into_balance(coin::split(escrow_coin, amount, ctx));
+    let escrow_balance = coin::into_balance(escrow_coin);
     let creator_address = tx_context::sender(ctx);
     let lock_start = clock::timestamp_ms(clock);
     let lock_end = lock_start + LOCK_PERIOD;
@@ -156,8 +156,7 @@ fun create_escrow<T>(
 
 /// Entry function to create escrow with an existing NFT
 public entry fun create_escrow_with_nft<NftType: key + store, T>(
-    amount: u64,
-    escrow_coin: &mut Coin<T>,
+    escrow_coin: Coin<T>,
     nft: NftType, // Object must be owned by the sender
     yield_provider_value: u8,
     clock: &Clock,
@@ -166,19 +165,18 @@ public entry fun create_escrow_with_nft<NftType: key + store, T>(
     let nft_id = object::id(&nft);
     let yield_provider = yield_provider_from_u8(yield_provider_value);
 
-    create_escrow(amount, escrow_coin, nft_id, yield_provider, clock, ctx);
+    create_escrow(escrow_coin, nft_id, yield_provider, clock, ctx);
     transfer::public_transfer(nft, tx_context::sender(ctx)); // back to sender
 }
 
 /// Entry function to create escrow with a newly minted NFT
 public entry fun create_escrow_mint_nft<T>(
-    amount: u64,
-    escrow_coin: &mut Coin<T>,
+    escrow_coin: Coin<T>,
     yield_provider_value: u8,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    assert!(amount > 0, EInvalidAmount);
+    assert!(coin::value(&escrow_coin) > 0, EInvalidAmount);
 
     let escrow_nft = EscrowNFT {
         id: object::new(ctx),
@@ -188,7 +186,7 @@ public entry fun create_escrow_mint_nft<T>(
     };
 
     let yield_provider = yield_provider_from_u8(yield_provider_value);
-    create_escrow(amount, escrow_coin, object::id(&escrow_nft), yield_provider, clock, ctx);
+    create_escrow(escrow_coin, object::id(&escrow_nft), yield_provider, clock, ctx);
 
     transfer::transfer(escrow_nft, tx_context::sender(ctx));
 }
