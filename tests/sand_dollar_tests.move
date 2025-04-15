@@ -11,22 +11,18 @@ public struct DummyNFT has key, store {
     id: UID,
 }
 
-// Test constants
 const USER: address = @0xA;
 const TEST_AMOUNT: u64 = 1000;
 const LOCK_PERIOD: u64 = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
 
-// Test helper function to create a test coin
 fun create_test_coin(ctx: &mut TxContext): Coin<SUI> {
     coin::mint_for_testing<SUI>(TEST_AMOUNT, ctx)
 }
 
-// Test helper function to create a test coin
 fun create_test_dummy_nft(ctx: &mut TxContext): DummyNFT {
     DummyNFT { id: object::new(ctx) }
 }
 
-// Test helper function to setup test scenario
 fun setup_test(): Scenario {
     test::begin(USER)
 }
@@ -66,7 +62,7 @@ fun test_create_escrow_zero_amount() {
 
     sand_dollar::create_escrow_mint_nft(
         escrow_coin,
-        0, // YieldProvider::None
+        0,
         &clock,
         test::ctx(&mut scenario),
     );
@@ -87,7 +83,7 @@ fun test_redeem_escrow() {
 
     sand_dollar::create_escrow_mint_nft(
         escrow_coin,
-        0, // YieldProvider::None
+        0,
         &clock,
         test::ctx(&mut scenario),
     );
@@ -123,7 +119,7 @@ fun test_create_escrow_with_lbtc() {
 
     sand_dollar::create_escrow_mint_nft(
         escrow_coin,
-        0, // YieldProvider::None
+        0,
         &clock,
         test::ctx(&mut scenario),
     );
@@ -252,7 +248,7 @@ fun test_redeem_escrow_before_lock_expiry() {
     let mut escrow = test::take_shared<Escrow<SUI>>(&scenario);
 
     clock::increment_for_testing(&mut clock, 100_000);
-    // This should fail with
+    // This should fail with ELockedEscrow
     sand_dollar::redeem_escrow(
         escrow_nft,
         &mut escrow,
@@ -266,7 +262,6 @@ fun test_redeem_escrow_before_lock_expiry() {
     test::end(scenario);
 }
 
-// Add a test to verify successful redemption after lock expiry
 #[test]
 fun test_redeem_escrow_after_lock_expiry() {
     let mut scenario = setup_test();
@@ -278,7 +273,7 @@ fun test_redeem_escrow_after_lock_expiry() {
 
     sand_dollar::create_escrow_mint_nft(
         escrow_coin,
-        0, // YieldProvider::None
+        0,
         &clock,
         test::ctx(&mut scenario),
     );
@@ -373,7 +368,7 @@ fun test_redeem_escrow_inactive() {
 
     test::next_tx(&mut scenario, USER);
 
-    let escrow_nft_after = test::take_from_address<EscrowNFT>(&scenario, USER); // Take it aagain should be returned from the escrow
+    let escrow_nft_after = test::take_from_address<EscrowNFT>(&scenario, USER);
 
     // Try to redeem again (should fail as escrow is inactive)
     sand_dollar::redeem_escrow(
@@ -466,7 +461,6 @@ fun test_create_escrow_with_navi_yield_provider() {
         test::ctx(&mut scenario),
     );
 
-    // Verify coin was split
     assert!(coin::value(&coin) == 0, 0);
 
     coin::destroy_zero(coin);
