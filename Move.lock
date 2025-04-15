@@ -2,11 +2,10 @@
 
 [move]
 version = 3
-manifest_digest = "EDE0248BBEBFA415D99BE45E826EC2691C9F89088EBD81088CEC8314FF6F4A66"
-deps_digest = "3C4103934B1E040BB6B23F1D610B4EF9F2F1166A50A104EADCF77467C004C600"
+manifest_digest = "5F21C256F9DC3DABD290723D80A90086C75378629B8FCAC7D61F532CD2D1855F"
+deps_digest = "F8BBB0CCB2491CA29A3DF03D6F92277A4F3574266507ACD77214D37ECA3F3082"
 dependencies = [
   { id = "Sui", name = "Sui" },
-  { id = "lending_core", name = "lending_core" },
 ]
 
 [[move.package]]
@@ -14,91 +13,11 @@ id = "MoveStdlib"
 source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
-id = "Pyth"
-source = { git = "https://github.com/naviprotocol/pyth-crosschain.git", rev = "navi-forked", subdir = "target_chains/sui/contracts" }
-
-dependencies = [
-  { id = "Sui", name = "Sui" },
-  { id = "Wormhole", name = "Wormhole" },
-]
-
-[[move.package]]
 id = "Sui"
 source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
-]
-
-[[move.package]]
-id = "SupraOracle"
-source = { git = "https://github.com/naviprotocol/dora-interface.git", rev = "main", subdir = "sui/mainnet/supra_holder" }
-
-dependencies = [
-  { id = "Sui", name = "Sui" },
-  { id = "supra_validator", name = "supra_validator" },
-]
-
-[[move.package]]
-id = "Wormhole"
-source = { git = "https://github.com/naviprotocol/wormhole.git", rev = "navi-forked", subdir = "sui/wormhole" }
-
-dependencies = [
-  { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
-id = "lending_core"
-source = { git = "https://github.com/naviprotocol/protocol-interface.git", rev = "main", subdir = "lending_core" }
-
-dependencies = [
-  { id = "Sui", name = "Sui" },
-  { id = "math", name = "math" },
-  { id = "oracle", name = "oracle" },
-  { id = "utils", name = "utils" },
-]
-
-[[move.package]]
-id = "math"
-source = { git = "https://github.com/naviprotocol/protocol-interface.git", rev = "main", subdir = "math" }
-
-dependencies = [
-  { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
-id = "oracle"
-source = { git = "https://github.com/naviprotocol/protocol-interface.git", rev = "main", subdir = "oracle" }
-
-dependencies = [
-  { id = "Pyth", name = "Pyth" },
-  { id = "Sui", name = "Sui" },
-  { id = "SupraOracle", name = "SupraOracle" },
-]
-
-[[move.package]]
-id = "supra_utils"
-source = { git = "https://github.com/naviprotocol/dora-interface.git", rev = "main", subdir = "sui/mainnet/supra_utils" }
-
-dependencies = [
-  { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
-id = "supra_validator"
-source = { git = "https://github.com/naviprotocol/dora-interface.git", rev = "main", subdir = "sui/mainnet/supra_validator" }
-
-dependencies = [
-  { id = "Sui", name = "Sui" },
-  { id = "supra_utils", name = "supra_utils" },
-]
-
-[[move.package]]
-id = "utils"
-source = { git = "https://github.com/naviprotocol/protocol-interface.git", rev = "main", subdir = "utils" }
-
-dependencies = [
-  { id = "Sui", name = "Sui" },
 ]
 
 [move.toolchain-version]

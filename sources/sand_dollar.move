@@ -1,19 +1,6 @@
 #[allow(unused_use)]
 module sand_dollar::sand_dollar;
 
-use lending_core::account::AccountCap;
-use lending_core::incentive_v2::Incentive as IncentiveV2;
-use lending_core::incentive_v3::{
-    Incentive as IncentiveV3,
-    deposit_with_account_cap,
-    withdraw_with_account_cap
-};
-use lending_core::lending;
-use lending_core::logic;
-use lending_core::pool::Pool;
-use lending_core::storage::Storage;
-use lending_core::version;
-use oracle::oracle::PriceOracle;
 use std::ascii::String as AsciiString;
 use std::string::{Self, String};
 use std::type_name;
@@ -36,7 +23,6 @@ const EInactiveEscrow: u64 = 4;
 const ELockedEscrow: u64 = 5;
 const EInvalidYieldProvider: u64 = 6;
 const EUnsupportedTokenType: u64 = 7;
-const EActiveEscrow: u64 = 8;
 
 /// Yield provider enum
 public enum YieldProvider has copy, drop, store {
@@ -80,7 +66,6 @@ public struct Escrow<phantom T> has key, store {
     lock_end: u64,
     nft_id: ID,
     yield_provider: YieldProvider,
-    navi_account_cap: Option<AccountCap>,
     active: bool,
 }
 
@@ -118,12 +103,6 @@ fun create_escrow<T>(
     let lock_start = clock::timestamp_ms(clock);
     let lock_end = lock_start + LOCK_PERIOD;
 
-    let navi_account_cap: Option<AccountCap> = if (yield_provider == YieldProvider::Navi) {
-        option::some(lending::create_account(ctx))
-    } else {
-        option::none()
-    };
-
     let escrow = Escrow<T> {
         id: object::new(ctx),
         creator_address,
@@ -136,7 +115,6 @@ fun create_escrow<T>(
         lock_end,
         nft_id,
         yield_provider,
-        navi_account_cap,
         active: true,
     };
 
@@ -215,7 +193,6 @@ public entry fun redeem_escrow<NftType: key + store, T>(
         lock_end,
         nft_id: _,
         yield_provider: _,
-        navi_account_cap: _,
         active: _,
     } = escrow;
 
@@ -255,59 +232,4 @@ fun yield_provider_from_u8(value: u8): YieldProvider {
     } else {
         YieldProvider::Navi
     }
-}
-
-/// PBT function to deposit coins to Navi to get a yield
-public entry fun deposit_navi<T>(
-    account_cap: &AccountCap,
-    clock: &Clock,
-    storage: &mut Storage,
-    pool: &mut Pool<T>,
-    asset: u8,
-    deposit_coin: Coin<T>,
-    incentive_v2: &mut IncentiveV2,
-    incentive_v3: &mut IncentiveV3,
-) {
-    deposit_with_account_cap(
-        clock,
-        storage,
-        pool,
-        asset,
-        deposit_coin,
-        incentive_v2,
-        incentive_v3,
-        account_cap,
-    )
-}
-
-/// PBT function to withdraw coins from Navi
-public entry fun withdraw_navi<T>(
-    account_cap: &AccountCap,
-    escrow: &Escrow<T>,
-    asset: u8,
-    amount: u64,
-    storage: &mut Storage,
-    pool: &mut Pool<T>,
-    incentive_v2: &mut IncentiveV2,
-    incentive_v3: &mut IncentiveV3,
-    oracle: &PriceOracle,
-    clock: &Clock,
-    ctx: &mut TxContext,
-) {
-    assert!(tx_context::sender(ctx) == escrow.owner_address, EInvalidSender);
-    assert!(escrow.active == false, EActiveEscrow);
-
-    let withdrawn_balance = withdraw_with_account_cap(
-        clock,
-        oracle,
-        storage,
-        pool,
-        asset,
-        amount,
-        incentive_v2,
-        incentive_v3,
-        account_cap,
-    );
-    let coin = coin::from_balance(withdrawn_balance, ctx);
-    transfer::public_transfer(coin, tx_context::sender(ctx));
 }
