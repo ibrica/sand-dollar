@@ -180,7 +180,6 @@ public entry fun redeem_escrow<NftType: key + store, T>(
     assert!(escrow.active, EInactiveEscrow);
     assert!(tx_context::sender(ctx) == escrow.creator_address, EInvalidSender);
 
-    // Destructure the escrow to get the balance
     let Escrow<T> {
         id,
         creator_address: _,
@@ -200,10 +199,8 @@ public entry fun redeem_escrow<NftType: key + store, T>(
 
     let total_balance = balance::withdraw_all<T>(escrow_balance);
 
-    // Create coin from balance
     let coin: Coin<T> = coin::from_balance(total_balance, ctx);
 
-    // Emit event before burning
     event::emit(EscrowRedeemed {
         escrow_id: object::uid_to_inner(id),
         amount: *amount,
