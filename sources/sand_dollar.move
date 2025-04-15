@@ -2,7 +2,18 @@
 module sand_dollar::sand_dollar;
 
 use lending_core::account::AccountCap;
+use lending_core::incentive_v2::Incentive as IncentiveV2;
+use lending_core::incentive_v3::{
+    Incentive as IncentiveV3,
+    deposit_with_account_cap,
+    withdraw_with_account_cap
+};
 use lending_core::lending;
+use lending_core::logic;
+use lending_core::pool::Pool;
+use lending_core::storage::Storage;
+use lending_core::version;
+use oracle::oracle::PriceOracle;
 use std::ascii::String as AsciiString;
 use std::string::{Self, String};
 use std::type_name;
@@ -243,17 +254,52 @@ fun yield_provider_from_u8(value: u8): YieldProvider {
     }
 }
 
-/// Deposit coins to get a yield
-///
-public fun deposit_coins<T>(
-    coin_balance: &mut Balance<T>,
-    yield_provider: YieldProvider,
-    ctx: &mut TxContext,
+/// PBT function to deposit coins to Navi to get a yield
+public fun deposit_navi<T>(
+    account_cap: &AccountCap,
+    clock: &Clock,
+    storage: &mut Storage,
+    pool: &mut Pool<T>,
+    asset: u8,
+    deposit_coin: Coin<T>,
+    incentive_v2: &mut IncentiveV2,
+    incentive_v3: &mut IncentiveV3,
 ) {
-    if (yield_provider == YieldProvider::None) {
-        return
-    } else if (yield_provider == YieldProvider::Navi) {
-        let deposit_balance = balance::withdraw_all<T>(coin_balance);
-        let coin: Coin<T> = coin::from_balance<T>(deposit_balance, ctx);
-    } else {}
+    deposit_with_account_cap(
+        clock,
+        storage,
+        pool,
+        asset,
+        deposit_coin,
+        incentive_v2,
+        incentive_v3,
+        account_cap,
+    )
+}
+
+/// PBT function to withdraw coins from Navi
+public fun withdraw_navi<T>(
+    account_cap: &AccountCap,
+    asset: u8,
+    amount: u64,
+    storage: &mut Storage,
+    pool: &mut Pool<T>,
+    incentive_v2: &mut IncentiveV2,
+    incentive_v3: &mut IncentiveV3,
+    oracle: &PriceOracle,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): Coin<T> {
+    let withdrawn_balance = withdraw_with_account_cap(
+        clock,
+        oracle,
+        storage,
+        pool,
+        asset,
+        amount,
+        incentive_v2,
+        incentive_v3,
+        account_cap,
+    );
+    coin::from_balance(withdrawn_balance, ctx)
 }
