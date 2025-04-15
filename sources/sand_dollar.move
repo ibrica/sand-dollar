@@ -36,6 +36,7 @@ const EInactiveEscrow: u64 = 4;
 const ELockedEscrow: u64 = 5;
 const EInvalidYieldProvider: u64 = 6;
 const EUnsupportedTokenType: u64 = 7;
+const EActiveEscrow: u64 = 8;
 
 /// Yield provider enum
 public enum YieldProvider has copy, drop, store {
@@ -70,6 +71,7 @@ public struct EscrowNFT has key, store {
 public struct Escrow<phantom T> has key, store {
     id: UID,
     creator_address: address,
+    owner_address: address,
     escrow_balance: Balance<T>,
     amount: u64,
     accumulated_amount: u64,
@@ -125,6 +127,7 @@ fun create_escrow<T>(
     let escrow = Escrow<T> {
         id: object::new(ctx),
         creator_address,
+        owner_address: creator_address,
         escrow_balance,
         amount,
         accumulated_amount: 0,
@@ -205,6 +208,7 @@ public entry fun redeem_escrow<NftType: key + store, T>(
     let Escrow<T> {
         id,
         creator_address: _,
+        owner_address: _,
         escrow_balance,
         amount,
         accumulated_amount: _,
@@ -236,6 +240,7 @@ public entry fun redeem_escrow<NftType: key + store, T>(
     transfer::public_transfer(nft, tx_context::sender(ctx));
 
     escrow.active = false;
+    escrow.owner_address = tx_context::sender(ctx);
 }
 
 /// Entry function to burn escrow NFT
@@ -280,6 +285,7 @@ public entry fun deposit_navi<T>(
 /// PBT function to withdraw coins from Navi
 public entry fun withdraw_navi<T>(
     account_cap: &AccountCap,
+    escrow: &Escrow<T>,
     asset: u8,
     amount: u64,
     storage: &mut Storage,
@@ -290,6 +296,9 @@ public entry fun withdraw_navi<T>(
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+    assert!(tx_context::sender(ctx) == escrow.owner_address, EInvalidSender);
+    assert!(escrow.active == false, EActiveEscrow);
+
     let withdrawn_balance = withdraw_with_account_cap(
         clock,
         oracle,
