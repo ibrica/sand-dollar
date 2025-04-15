@@ -223,10 +223,12 @@ public entry fun burn_escrow_nft(nft: EscrowNFT) {
 
 /// Helper function to convert u8 to YieldProvider
 fun yield_provider_from_u8(value: u8): YieldProvider {
-    assert!(value <= 1, EInvalidYieldProvider);
+    assert!(value <= 2, EInvalidYieldProvider);
     if (value == 0) {
         YieldProvider::None
-    } else {
+    } else if (value == 1) {
         YieldProvider::Navi
+    } else {
+        YieldProvider::SuiLend
     }
 }
