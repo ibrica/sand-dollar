@@ -255,7 +255,7 @@ fun yield_provider_from_u8(value: u8): YieldProvider {
 }
 
 /// PBT function to deposit coins to Navi to get a yield
-public fun deposit_navi<T>(
+public entry fun deposit_navi<T>(
     account_cap: &AccountCap,
     clock: &Clock,
     storage: &mut Storage,
@@ -278,7 +278,7 @@ public fun deposit_navi<T>(
 }
 
 /// PBT function to withdraw coins from Navi
-public fun withdraw_navi<T>(
+public entry fun withdraw_navi<T>(
     account_cap: &AccountCap,
     asset: u8,
     amount: u64,
@@ -289,7 +289,7 @@ public fun withdraw_navi<T>(
     oracle: &PriceOracle,
     clock: &Clock,
     ctx: &mut TxContext,
-): Coin<T> {
+) {
     let withdrawn_balance = withdraw_with_account_cap(
         clock,
         oracle,
@@ -301,5 +301,6 @@ public fun withdraw_navi<T>(
         incentive_v3,
         account_cap,
     );
-    coin::from_balance(withdrawn_balance, ctx)
+    let coin = coin::from_balance(withdrawn_balance, ctx);
+    transfer::public_transfer(coin, tx_context::sender(ctx));
 }
