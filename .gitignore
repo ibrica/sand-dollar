@@ -1,27 +1,18 @@
-# Build output
-build/
-*.trace
-
-# IDE specific files
+# Project-wide ignores
+.DS_Store
 .idea/
 .vscode/
-*.swp
-*.swo
 
-# Move specific
-*.trace
-*.trace.mvc
+# Frontend ignores
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
 
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# OS specific
-.DS_Store
-Thumbs.db
-
-# Sui specific
-sui.log
-sui.log.* 
-.coverage_map.*
+# Contract is ignored via its own .gitignore file

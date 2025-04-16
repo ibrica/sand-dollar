@@ -1,0 +1,16 @@
+# Sui Move build artifacts
+build/
+*.test.*
+.coverage_map.mvcov
+.trace
+
+# Sui CLI generated files
+.history/
+.DS_Store
+
+# IDE and editor files
+.idea/
+.vscode/
+*.iml
+*.swp
+*~ 
