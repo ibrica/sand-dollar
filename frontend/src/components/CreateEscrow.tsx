@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWalletKit } from '@mysten/wallet-kit';
+import { useWallet } from './WalletProvider';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { createEscrowMintNft, getUserCoins, YieldProvider } from '@/lib/sui';
 
@@ -12,11 +12,13 @@ type CreateEscrowFormInputs = {
 };
 
 export function CreateEscrow() {
-  const { currentAccount, signAndExecuteTransactionBlock } = useWalletKit();
+  const { accounts, selectedWallet, signAndExecuteTransaction, reportTransactionEffects } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [coins, setCoins] = useState<any[]>([]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<CreateEscrowFormInputs>();
+
+  const currentAccount = accounts?.[0];
 
   useEffect(() => {
     if (currentAccount?.address) {
@@ -36,7 +38,7 @@ export function CreateEscrow() {
   };
 
   const onSubmit: SubmitHandler<CreateEscrowFormInputs> = async (data) => {
-    if (!currentAccount) return;
+    if (!currentAccount || !selectedWallet) return;
     
     setIsLoading(true);
     try {
@@ -45,12 +47,14 @@ export function CreateEscrow() {
       
       await createEscrowMintNft(
         {
-          signAndExecuteTransactionBlock,
+          signAndExecuteTransaction: (tx, account) => signAndExecuteTransaction(tx, account),
+          reportTransactionEffects: reportTransactionEffects
         },
         '0x2::sui::SUI', // Coin type
         data.coinObject,
         amount,
-        yieldProvider
+        yieldProvider,
+        currentAccount
       );
       
       alert('Escrow created successfully!');

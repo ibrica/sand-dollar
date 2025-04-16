@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWalletKit } from '@mysten/wallet-kit';
+import { useWallet } from './WalletProvider';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { 
   createEscrowWithNft, 
@@ -18,12 +18,14 @@ type ConnectNftFormInputs = {
 };
 
 export function ConnectExistingNft() {
-  const { currentAccount, signAndExecuteTransactionBlock } = useWalletKit();
+  const { accounts, selectedWallet, signAndExecuteTransaction, reportTransactionEffects } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [coins, setCoins] = useState<any[]>([]);
   const [nfts, setNfts] = useState<any[]>([]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<ConnectNftFormInputs>();
+  
+  const currentAccount = accounts?.[0];
 
   useEffect(() => {
     if (currentAccount?.address) {
@@ -61,7 +63,7 @@ export function ConnectExistingNft() {
   };
 
   const onSubmit: SubmitHandler<ConnectNftFormInputs> = async (data) => {
-    if (!currentAccount) return;
+    if (!currentAccount || !selectedWallet) return;
     
     setIsLoading(true);
     try {
@@ -74,14 +76,16 @@ export function ConnectExistingNft() {
       
       await createEscrowWithNft(
         {
-          signAndExecuteTransactionBlock,
+          signAndExecuteTransaction: (tx, account) => signAndExecuteTransaction(tx, account),
+          reportTransactionEffects: reportTransactionEffects
         },
         '0x2::sui::SUI', // Coin type
         data.coinObject,
         amount,
         data.nftObject,
         nftType,
-        yieldProvider
+        yieldProvider,
+        currentAccount
       );
       
       alert('Escrow created successfully with existing NFT!');

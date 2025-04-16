@@ -1,8 +1,6 @@
 import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { SerializedSignature } from '@mysten/sui.js/cryptography';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { WalletAdapter } from '@mysten/wallet-adapter-base';
+import { toB64 } from '@mysten/sui.js/utils';
 
 // Network configuration
 const NETWORK = process.env.NEXT_PUBLIC_NETWORK || 'devnet';
@@ -53,13 +51,21 @@ export enum YieldProvider {
   SuiLend = 2,
 }
 
+// Interface that defines the necessary wallet methods
+export interface WalletInterface {
+  signAndExecuteTransaction: (tx: any, account: any) => Promise<any>;
+  signTransaction?: (tx: any, account: any) => Promise<any>;
+  reportTransactionEffects?: (effects: any, account: any) => Promise<void>;
+}
+
 // Function to create escrow with minting a new NFT
 export async function createEscrowMintNft(
-  wallet: WalletAdapter,
+  wallet: WalletInterface,
   coinType: string,
   coinObjectId: string,
   amount: bigint,
-  yieldProvider: YieldProvider
+  yieldProvider: YieldProvider,
+  account: any
 ) {
   const tx = new TransactionBlock();
 
@@ -76,20 +82,32 @@ export async function createEscrowMintNft(
     arguments: [coin, tx.pure(yieldProvider), clock],
   });
 
-  return wallet.signAndExecuteTransactionBlock({
-    transactionBlock: tx,
-  });
+  // Execute the transaction
+  const result = await wallet.signAndExecuteTransaction(tx, account);
+
+  // Report transaction effects if supported
+  if (wallet.reportTransactionEffects && result.effects) {
+    await wallet.reportTransactionEffects(
+      typeof result.effects === 'string'
+        ? result.effects
+        : toB64(result.effects),
+      account
+    );
+  }
+
+  return result;
 }
 
 // Function to create escrow with existing NFT
 export async function createEscrowWithNft(
-  wallet: WalletAdapter,
+  wallet: WalletInterface,
   coinType: string,
   coinObjectId: string,
   amount: bigint,
   nftObjectId: string,
   nftType: string,
-  yieldProvider: YieldProvider
+  yieldProvider: YieldProvider,
+  account: any
 ) {
   const tx = new TransactionBlock();
 
@@ -106,18 +124,30 @@ export async function createEscrowWithNft(
     arguments: [coin, tx.object(nftObjectId), tx.pure(yieldProvider), clock],
   });
 
-  return wallet.signAndExecuteTransactionBlock({
-    transactionBlock: tx,
-  });
+  // Execute the transaction
+  const result = await wallet.signAndExecuteTransaction(tx, account);
+
+  // Report transaction effects if supported
+  if (wallet.reportTransactionEffects && result.effects) {
+    await wallet.reportTransactionEffects(
+      typeof result.effects === 'string'
+        ? result.effects
+        : toB64(result.effects),
+      account
+    );
+  }
+
+  return result;
 }
 
 // Function to redeem escrow
 export async function redeemEscrow(
-  wallet: WalletAdapter,
+  wallet: WalletInterface,
   escrowId: string,
   nftObjectId: string,
   nftType: string,
-  coinType: string
+  coinType: string,
+  account: any
 ) {
   const tx = new TransactionBlock();
 
@@ -131,15 +161,27 @@ export async function redeemEscrow(
     arguments: [tx.object(nftObjectId), tx.object(escrowId), clock],
   });
 
-  return wallet.signAndExecuteTransactionBlock({
-    transactionBlock: tx,
-  });
+  // Execute the transaction
+  const result = await wallet.signAndExecuteTransaction(tx, account);
+
+  // Report transaction effects if supported
+  if (wallet.reportTransactionEffects && result.effects) {
+    await wallet.reportTransactionEffects(
+      typeof result.effects === 'string'
+        ? result.effects
+        : toB64(result.effects),
+      account
+    );
+  }
+
+  return result;
 }
 
 // Function to burn escrow NFT
 export async function burnEscrowNft(
-  wallet: WalletAdapter,
-  nftObjectId: string
+  wallet: WalletInterface,
+  nftObjectId: string,
+  account: any
 ) {
   const tx = new TransactionBlock();
 
@@ -149,9 +191,20 @@ export async function burnEscrowNft(
     arguments: [tx.object(nftObjectId)],
   });
 
-  return wallet.signAndExecuteTransactionBlock({
-    transactionBlock: tx,
-  });
+  // Execute the transaction
+  const result = await wallet.signAndExecuteTransaction(tx, account);
+
+  // Report transaction effects if supported
+  if (wallet.reportTransactionEffects && result.effects) {
+    await wallet.reportTransactionEffects(
+      typeof result.effects === 'string'
+        ? result.effects
+        : toB64(result.effects),
+      account
+    );
+  }
+
+  return result;
 }
 
 // Function to get owned objects

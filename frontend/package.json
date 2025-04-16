@@ -13,10 +13,7 @@
     "react-dom": "^18",
     "next": "15.3.0",
     "@mysten/sui.js": "^0.50.0",
-    "@mysten/wallet-adapter-base": "^0.10.0",
-    "@mysten/wallet-adapter-react": "^0.10.0",
-    "@mysten/wallet-adapter-wallet-standard": "^0.10.0",
-    "@mysten/wallet-kit": "^0.10.0",
+    "@mysten/wallet-standard": "^0.14.4",
     "react-hook-form": "^7.50.0",
     "clsx": "^2.1.0"
   },

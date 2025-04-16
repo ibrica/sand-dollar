@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWalletKit } from '@mysten/wallet-kit';
+import { useWallet } from './WalletProvider';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { redeemEscrow, burnEscrowNft, getOwnedObjects } from '@/lib/sui';
 
@@ -12,13 +12,15 @@ type RedeemFormInputs = {
 };
 
 export function RedeemNft() {
-  const { currentAccount, signAndExecuteTransactionBlock } = useWalletKit();
+  const { accounts, selectedWallet, signAndExecuteTransaction, reportTransactionEffects } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [escrows, setEscrows] = useState<any[]>([]);
   const [nfts, setNfts] = useState<any[]>([]);
   const [burnableNfts, setBurnableNfts] = useState<any[]>([]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<RedeemFormInputs>();
+  
+  const currentAccount = accounts?.[0];
 
   useEffect(() => {
     if (currentAccount?.address) {
@@ -65,7 +67,7 @@ export function RedeemNft() {
   };
 
   const onSubmit: SubmitHandler<RedeemFormInputs> = async (data) => {
-    if (!currentAccount) return;
+    if (!currentAccount || !selectedWallet) return;
     
     setIsLoading(true);
     try {
@@ -75,12 +77,14 @@ export function RedeemNft() {
       
       await redeemEscrow(
         {
-          signAndExecuteTransactionBlock,
+          signAndExecuteTransaction: (tx, account) => signAndExecuteTransaction(tx, account),
+          reportTransactionEffects: reportTransactionEffects
         },
         data.escrowObject,
         data.nftObject,
         nftType,
-        data.coinType || '0x2::sui::SUI'
+        data.coinType || '0x2::sui::SUI',
+        currentAccount
       );
       
       alert('Escrow redeemed successfully!');
@@ -95,15 +99,17 @@ export function RedeemNft() {
   };
 
   const handleBurnNft = async (nftId: string) => {
-    if (!currentAccount) return;
+    if (!currentAccount || !selectedWallet) return;
     
     setIsLoading(true);
     try {
       await burnEscrowNft(
         {
-          signAndExecuteTransactionBlock,
+          signAndExecuteTransaction: (tx, account) => signAndExecuteTransaction(tx, account),
+          reportTransactionEffects: reportTransactionEffects
         },
-        nftId
+        nftId,
+        currentAccount
       );
       
       alert('NFT burned successfully!');

@@ -5,10 +5,11 @@ import { ConnectWallet } from '@/components/ConnectWallet';
 import { CreateEscrow } from '@/components/CreateEscrow';
 import { ConnectExistingNft } from '@/components/ConnectExistingNft';
 import { RedeemNft } from '@/components/RedeemNft';
-import { useWalletKit } from '@mysten/wallet-kit';
+import { useWallet } from '@/components/WalletProvider';
 
 export default function Home() {
-  const { currentAccount } = useWalletKit();
+  const { accounts } = useWallet();
+  const currentAccount = accounts?.[0];
   const [activeTab, setActiveTab] = useState<'create' | 'connect' | 'redeem'>('create');
   
   return (
