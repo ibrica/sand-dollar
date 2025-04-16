@@ -435,7 +435,7 @@ fun test_create_escrow_invalid_yield_provider() {
     // Try to create escrow with invalid yield provider value
     sand_dollar::create_escrow_mint_nft(
         escrow_coin,
-        2, // Invalid yield provider value
+        3, // Invalid yield provider value
         &clock,
         test::ctx(&mut scenario),
     );
