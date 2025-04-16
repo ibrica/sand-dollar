@@ -1,95 +1,93 @@
-# SandDollar.fi
+# Sand Dollar
 
-A decentralized application on the SUI blockchain for securely escrowing wrapped BTC tokens and minting NFTs.
-
-## Overview
-
-SandDollar.fi allows users to:
-
-- Escrow wBTC (from SUI bridge) and lBTC (Lombard Liquid BTC) tokens
-- Receive NFTs representing their escrowed positions
-- Redeem their escrowed tokens using the NFTs
+Sand Dollar is a project for creating yield-generating NFTs on the Sui blockchain. Users can lock coins, associate them with NFTs, and generate yield through different providers.
 
 ## Project Structure
 
+The project is organized into two main parts:
+
+### 1. Smart Contract (`/contract`)
+
+The Sui Move smart contract that handles:
+
+- Creating escrow positions with newly minted NFTs
+- Creating escrow positions with existing NFTs
+- Redemption of escrow positions
+- Burning of NFTs
+
+### 2. Frontend Application (`/frontend`)
+
+A Next.js application that provides a user interface for interacting with the smart contract:
+
+- Creating new yield NFTs
+- Using existing NFTs for yield generation
+- Redeeming NFTs to get coins back
+- Burning NFTs that were minted by the smart contract
+
+## Getting Started
+
+### Smart Contract
+
+1. Navigate to the contract directory:
+
+```bash
+cd contract
 ```
-sand-dollar/
-├── Move.toml           # Package manifest
-├── sources/            # Smart contract source files
-│   └── sand_dollar.move
-├── tests/             # Test files
-│   ├── sand_dollar_tests.move
-│   └── test_config.toml
-└── .gitignore         # Git ignore rules
+
+2. Build the contract:
+
+```bash
+sui move build
 ```
 
-## Prerequisites
+3. Deploy the contract:
 
-- [Sui CLI](https://docs.sui.io/guides/developer/getting-started/sui-install)
-- [Move CLI](https://github.com/move-language/move/releases)
+```bash
+sui client publish --gas-budget 100000000
+```
 
-## Development Setup
+4. Note the package ID from the deployment output.
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   sui move build
-   ```
+### Frontend
 
-## Testing
+1. Navigate to the frontend directory:
 
-The project includes a comprehensive test suite. To run tests:
+```bash
+cd frontend
+```
 
-1. Run all tests:
+2. Create a `.env.local` file with the following content:
 
-   ```bash
-   sui move test
-   ```
+```
+NEXT_PUBLIC_NETWORK=devnet
+NEXT_PUBLIC_PACKAGE_ID=<your_package_id>  # Replace with the package ID from step 4 above
+NEXT_PUBLIC_MODULE_NAME=sand_dollar
+NEXT_PUBLIC_LOCAL_RPC=http://localhost:9000
+NEXT_PUBLIC_DEVNET_RPC=https://fullnode.devnet.sui.io:443
+NEXT_PUBLIC_TESTNET_RPC=https://fullnode.testnet.sui.io:443
+NEXT_PUBLIC_MAINNET_RPC=https://fullnode.mainnet.sui.io:443
+```
 
-2. Run specific test scenarios:
+3. Install dependencies:
 
-   ```bash
-   sui move test test_create_and_redeem_escrow
-   sui move test test_create_escrow_with_zero_amount
-   ```
+```bash
+npm install
+```
 
-3. Run tests with verbose output:
+4. Run the development server:
 
-   ```bash
-   sui move test --verbose
-   ```
+```bash
+npm run dev
+```
 
-4. Run tests with coverage:
-   ```bash
-   sui move test --coverage
-   ```
+5. Open [http://localhost:3000](http://localhost:3000) in your browser to interact with the application.
 
-Test configuration can be found in `tests/test_config.toml`.
+## Features
 
-## Deployment
-
-1. Build the package:
-
-   ```bash
-   sui move build
-   ```
-
-2. Deploy to SUI network:
-   ```bash
-   sui client publish --gas-budget 10000000
-   ```
-
-## Development Workflow
-
-1. Make changes to the smart contract in `sources/`
-2. Update tests in `tests/` if needed
-3. Run tests to verify changes
-4. Build and deploy if tests pass
-
-## Security
-
-This project is in development and has not been audited. Use at your own risk.
+- **Create New Yield NFT**: Lock coins and get a newly minted NFT
+- **Use Existing NFT**: Connect an existing NFT to locked coins
+- **Redeem/Burn**: Redeem the escrow position to get coins back or burn NFTs
 
 ## License
 
-MIT
+[MIT License](LICENSE)
