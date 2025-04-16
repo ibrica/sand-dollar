@@ -6,6 +6,7 @@ import { CreateEscrow } from '@/components/CreateEscrow';
 import { ConnectExistingNft } from '@/components/ConnectExistingNft';
 import { RedeemNft } from '@/components/RedeemNft';
 import { useWallet } from '@/components/WalletProvider';
+import { Hero } from '@/components/Hero';
 
 export default function Home() {
   const { accounts } = useWallet();
@@ -13,68 +14,89 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'create' | 'connect' | 'redeem'>('create');
   
   return (
-    <main className="min-h-screen p-4 md:p-6 lg:p-8 bg-gray-100">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">Sand Dollar - Yield NFTs</h1>
-            <ConnectWallet />
-          </div>
-          
-          {currentAccount && (
-            <div className="bg-white p-3 rounded shadow text-sm">
-              <p>Connected: <span className="font-mono">{currentAccount.address.substring(0, 10)}...{currentAccount.address.substring(currentAccount.address.length - 6)}</span></p>
-            </div>
-          )}
-        </header>
-        
+    <main className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border py-4">
+        <div className="container flex justify-between items-center">
+          <h1 className="text-2xl font-bold gradient-text">Sand Dollar</h1>
+          <ConnectWallet />
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <Hero />
+      
+      {/* Main Content */}
+      <div className="container py-16">
         {currentAccount && (
-          <>
-            <div className="mb-6 bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="flex border-b">
-                <button
-                  onClick={() => setActiveTab('create')}
-                  className={`flex-1 py-3 px-4 font-medium ${activeTab === 'create' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  Create New NFT
-                </button>
-                <button
-                  onClick={() => setActiveTab('connect')}
-                  className={`flex-1 py-3 px-4 font-medium ${activeTab === 'connect' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  Use Existing NFT
-                </button>
-                <button
-                  onClick={() => setActiveTab('redeem')}
-                  className={`flex-1 py-3 px-4 font-medium ${activeTab === 'redeem' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  Redeem/Burn
-                </button>
-              </div>
-              
-              <div className="p-6">
-                {activeTab === 'create' && <CreateEscrow />}
-                {activeTab === 'connect' && <ConnectExistingNft />}
-                {activeTab === 'redeem' && <RedeemNft />}
-              </div>
+          <div className="mb-6 card">
+            <div className="flex flex-col sm:flex-row border-b border-border mb-6">
+              <button
+                onClick={() => setActiveTab('create')}
+                className={`py-3 px-4 font-medium border-b-2 ${
+                  activeTab === 'create' 
+                    ? 'border-accent text-accent' 
+                    : 'border-transparent text-text-secondary hover:text-white'
+                }`}
+              >
+                Create New NFT
+              </button>
+              <button
+                onClick={() => setActiveTab('connect')}
+                className={`py-3 px-4 font-medium border-b-2 ${
+                  activeTab === 'connect' 
+                    ? 'border-accent text-accent' 
+                    : 'border-transparent text-text-secondary hover:text-white'
+                }`}
+              >
+                Use Existing NFT
+              </button>
+              <button
+                onClick={() => setActiveTab('redeem')}
+                className={`py-3 px-4 font-medium border-b-2 ${
+                  activeTab === 'redeem' 
+                    ? 'border-accent text-accent' 
+                    : 'border-transparent text-text-secondary hover:text-white'
+                }`}
+              >
+                Redeem/Burn
+              </button>
             </div>
-          </>
+            
+            <div className="p-6">
+              {activeTab === 'create' && <CreateEscrow />}
+              {activeTab === 'connect' && <ConnectExistingNft />}
+              {activeTab === 'redeem' && <RedeemNft />}
+            </div>
+          </div>
         )}
         
         {!currentAccount && (
-          <div className="text-center p-12 bg-white rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-4">Welcome to Sand Dollar</h2>
-            <p className="mb-6">Connect your wallet to create yield-generating NFTs</p>
+          <div className="text-center p-12 card">
+            <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
+            <p className="mb-6 text-text-secondary">Connect your wallet to create yield-generating NFTs</p>
             <div className="flex justify-center">
               <ConnectWallet />
             </div>
           </div>
         )}
-        
-        <footer className="mt-10 text-center text-gray-500 text-sm">
-          <p>Sand Dollar - Create yield-generating NFTs on the Sui blockchain</p>
-        </footer>
       </div>
+      
+      <footer className="border-t border-border py-8">
+        <div className="container">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <h3 className="text-xl font-bold gradient-text mb-2">Sand Dollar</h3>
+              <p className="text-text-secondary">Create yield-generating NFTs on the Sui blockchain</p>
+            </div>
+            <div className="flex gap-4">
+              <a href="#" className="text-text-secondary hover:text-accent">Docs</a>
+              <a href="#" className="text-text-secondary hover:text-accent">GitHub</a>
+              <a href="#" className="text-text-secondary hover:text-accent">Twitter</a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 } 
