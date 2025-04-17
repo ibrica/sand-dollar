@@ -17,7 +17,7 @@ export function getRpcUrl(): string {
     case 'mainnet':
       return process.env.NEXT_PUBLIC_MAINNET_RPC || getFullnodeUrl('mainnet');
     default:
-      return process.env.NEXT_PUBLIC_DEVNET_RPC || getFullnodeUrl('devnet');
+      return process.env.NEXT_PUBLIC_TESTNET_RPC || getFullnodeUrl('testnet');
   }
 }
 
