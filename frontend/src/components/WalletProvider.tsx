@@ -64,11 +64,32 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   // Initialize available wallets
   useEffect(() => {
     const availableWallets = getWallets().get();
-    setWallets([...availableWallets]);
+    
+    // Filter out duplicate wallets by name
+    const uniqueWallets = Array.from(
+      availableWallets.reduce((map, wallet) => {
+        if (!map.has(wallet.name)) {
+          map.set(wallet.name, wallet);
+        }
+        return map;
+      }, new Map()).values()
+    );
+    
+    setWallets([...uniqueWallets]);
 
     // Subscribe to wallet changes
     const unsubscribe = getWallets().on('walletsChanged' as keyof WalletsEventsListeners, () => {
-      setWallets([...getWallets().get()]);
+      const updatedWallets = getWallets().get();
+      // Apply the same filtering for updates
+      const updatedUniqueWallets = Array.from(
+        updatedWallets.reduce((map, wallet) => {
+          if (!map.has(wallet.name)) {
+            map.set(wallet.name, wallet);
+          }
+          return map;
+        }, new Map()).values()
+      );
+      setWallets([...updatedUniqueWallets]);
     });
 
     return () => {
