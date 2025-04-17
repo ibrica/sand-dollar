@@ -39,9 +39,9 @@ export function ConnectWallet() {
       {isOpen && (
         <div className="absolute mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
           <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-            {wallets.map((wallet) => (
+            {wallets.map((wallet, index) => (
               <button
-                key={wallet.name}
+                key={`${wallet.name}-${index}`}
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => handleConnect(wallet.name)}
               >
