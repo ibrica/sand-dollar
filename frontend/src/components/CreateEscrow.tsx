@@ -71,15 +71,15 @@ export function CreateEscrow() {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Create New Yield NFT</h2>
+    <div className="bg-background-light p-6 rounded-lg shadow-md border border-border">
+      <h2 className="text-xl font-bold mb-4 text-white">Create New Yield NFT</h2>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Coin Object</label>
+          <label className="block text-sm font-medium text-white">Coin Object</label>
           <select
             {...register('coinObject', { required: 'Please select a coin' })}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-2 bg-background border border-border rounded-md shadow-sm text-white focus:outline-none focus:ring-accent focus:border-accent"
           >
             <option value="">Select a coin</option>
             {coins.map((coin) => (
@@ -88,11 +88,11 @@ export function CreateEscrow() {
               </option>
             ))}
           </select>
-          {errors.coinObject && <p className="text-red-500 text-xs mt-1">{errors.coinObject.message}</p>}
+          {errors.coinObject && <p className="text-error text-xs mt-1">{errors.coinObject.message}</p>}
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700">Amount (SUI)</label>
+          <label className="block text-sm font-medium text-white">Amount (SUI)</label>
           <input
             type="number"
             step="0.000000001"
@@ -101,28 +101,28 @@ export function CreateEscrow() {
               required: 'Amount is required',
               min: { value: 0.000000001, message: 'Amount must be greater than 0' }
             })}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-2 bg-background border border-border rounded-md shadow-sm text-white focus:outline-none focus:ring-accent focus:border-accent"
           />
-          {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
+          {errors.amount && <p className="text-error text-xs mt-1">{errors.amount.message}</p>}
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700">Yield Provider</label>
+          <label className="block text-sm font-medium text-white">Yield Provider</label>
           <select
             {...register('yieldProvider', { required: 'Please select a yield provider' })}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full px-3 py-2 bg-background border border-border rounded-md shadow-sm text-white focus:outline-none focus:ring-accent focus:border-accent"
           >
             <option value="0">None</option>
             <option value="1">Navi</option>
             <option value="2">SuiLend</option>
           </select>
-          {errors.yieldProvider && <p className="text-red-500 text-xs mt-1">{errors.yieldProvider.message}</p>}
+          {errors.yieldProvider && <p className="text-error text-xs mt-1">{errors.yieldProvider.message}</p>}
         </div>
         
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:bg-gray-600 disabled:text-gray-400"
         >
           {isLoading ? 'Creating...' : 'Create Yield NFT'}
         </button>

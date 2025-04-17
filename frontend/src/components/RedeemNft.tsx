@@ -128,15 +128,15 @@ export function RedeemNft() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-bold mb-4">Redeem Escrow</h2>
+      <div className="bg-background-light p-6 rounded-lg shadow-md border border-border">
+        <h2 className="text-xl font-bold mb-4 text-white">Redeem Escrow</h2>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Escrow Object</label>
+            <label className="block text-sm font-medium text-white">Escrow Object</label>
             <select
               {...register('escrowObject', { required: 'Please select an escrow' })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full px-3 py-2 bg-background border border-border rounded-md shadow-sm text-white focus:outline-none focus:ring-accent focus:border-accent"
             >
               <option value="">Select an escrow</option>
               {escrows.map((escrow) => (
@@ -145,14 +145,14 @@ export function RedeemNft() {
                 </option>
               ))}
             </select>
-            {errors.escrowObject && <p className="text-red-500 text-xs mt-1">{errors.escrowObject.message}</p>}
+            {errors.escrowObject && <p className="text-error text-xs mt-1">{errors.escrowObject.message}</p>}
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700">NFT Object</label>
+            <label className="block text-sm font-medium text-white">NFT Object</label>
             <select
               {...register('nftObject', { required: 'Please select an NFT' })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full px-3 py-2 bg-background border border-border rounded-md shadow-sm text-white focus:outline-none focus:ring-accent focus:border-accent"
             >
               <option value="">Select an NFT</option>
               {nfts.map((nft) => (
@@ -161,23 +161,23 @@ export function RedeemNft() {
                 </option>
               ))}
             </select>
-            {errors.nftObject && <p className="text-red-500 text-xs mt-1">{errors.nftObject.message}</p>}
+            {errors.nftObject && <p className="text-error text-xs mt-1">{errors.nftObject.message}</p>}
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700">Coin Type (leave empty for SUI)</label>
+            <label className="block text-sm font-medium text-white">Coin Type (leave empty for SUI)</label>
             <input
               type="text"
               {...register('coinType')}
               placeholder="0x2::sui::SUI"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full px-3 py-2 bg-background border border-border rounded-md shadow-sm text-white focus:outline-none focus:ring-accent focus:border-accent"
             />
           </div>
           
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:bg-gray-600 disabled:text-gray-400"
           >
             {isLoading ? 'Redeeming...' : 'Redeem Escrow'}
           </button>
@@ -185,17 +185,17 @@ export function RedeemNft() {
       </div>
       
       {burnableNfts.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4">Burn Sand Dollar NFTs</h2>
+        <div className="bg-background-light p-6 rounded-lg shadow-md border border-border">
+          <h2 className="text-xl font-bold mb-4 text-white">Burn Sand Dollar NFTs</h2>
           
           <div className="space-y-4">
             {burnableNfts.map((nft) => (
-              <div key={nft.data?.objectId} className="flex items-center justify-between p-3 border border-gray-200 rounded">
-                <span>{nft.data?.objectId.substring(0, 12)}... - Sand Dollar NFT</span>
+              <div key={nft.data?.objectId} className="flex items-center justify-between p-3 border border-border rounded bg-background">
+                <span className="text-white">{nft.data?.objectId.substring(0, 12)}... - Sand Dollar NFT</span>
                 <button
                   onClick={() => handleBurnNft(nft.data?.objectId)}
                   disabled={isLoading}
-                  className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded"
+                  className="px-3 py-1 text-sm bg-error hover:bg-red-700 text-white rounded"
                 >
                   Burn
                 </button>
