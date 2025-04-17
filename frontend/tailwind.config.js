@@ -11,6 +11,7 @@ module.exports = {
         primary: '#5065D8',
         secondary: '#172FD0',
         accent: '#00F2FE',
+        sand: '#D9CBB9',
         background: {
           DEFAULT: '#0B122E',
           light: '#1A2348',

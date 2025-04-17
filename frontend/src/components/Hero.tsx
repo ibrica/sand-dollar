@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import LogoSvg from '@/assets/logo.svg';
 
 export const Hero = () => {
   return (
@@ -22,9 +23,19 @@ export const Hero = () => {
           </div>
           <div className="lg:w-1/2 relative">
             <div className="relative w-full h-[400px] rounded-xl overflow-hidden shadow-lg">
-              {/* Placeholder for dashboard image - replace with actual image */}
+              {/* Dashboard preview with the Sand Dollar logo */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 z-10"></div>
               <div className="absolute inset-0 bg-background-light z-0"></div>
+              
+              {/* Large logo in the background */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-10 z-5">
+                <LogoSvg 
+                  width={280} 
+                  height={280} 
+                  style={{ stroke: '#FFFFFF' }}
+                />
+              </div>
+              
               <div className="absolute inset-0 flex items-center justify-center z-20">
                 <div className="text-center">
                   <div className="text-3xl font-bold mb-4 gradient-text">Dashboard Preview</div>

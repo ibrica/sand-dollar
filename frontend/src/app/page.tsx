@@ -7,6 +7,7 @@ import { ConnectExistingNft } from '@/components/ConnectExistingNft';
 import { RedeemNft } from '@/components/RedeemNft';
 import { useWallet } from '@/components/WalletProvider';
 import { Hero } from '@/components/Hero';
+import { Logo } from '@/components/Logo';
 
 export default function Home() {
   const { accounts } = useWallet();
@@ -18,7 +19,7 @@ export default function Home() {
       {/* Header */}
       <header className="border-b border-border py-4">
         <div className="container flex justify-between items-center">
-          <h1 className="text-2xl font-bold gradient-text">Sand Dollar</h1>
+          <Logo size={48} color="gradient" />
           <ConnectWallet />
         </div>
       </header>
@@ -86,8 +87,8 @@ export default function Home() {
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
-              <h3 className="text-xl font-bold gradient-text mb-2">Sand Dollar</h3>
-              <p className="text-text-secondary">Create yield-generating NFTs on the Sui blockchain</p>
+              <Logo size={32} color="gradient" />
+              <p className="text-text-secondary mt-2">Create yield-generating NFTs on the Sui blockchain</p>
             </div>
             <div className="flex gap-4">
               <a href="#" className="text-text-secondary hover:text-accent">Docs</a>
