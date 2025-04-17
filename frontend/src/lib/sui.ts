@@ -13,25 +13,13 @@ export function getRpcUrl(): string {
     case 'local':
       return process.env.NEXT_PUBLIC_LOCAL_RPC || 'http://localhost:9000';
     case 'devnet':
-      return (
-        process.env.NEXT_PUBLIC_DEVNET_RPC ||
-        'https://fullnode.devnet.sui.io:443'
-      );
+      return process.env.NEXT_PUBLIC_DEVNET_RPC || getFullnodeUrl('devnet');
     case 'testnet':
-      return (
-        process.env.NEXT_PUBLIC_TESTNET_RPC ||
-        'https://fullnode.testnet.sui.io:443'
-      );
+      return process.env.NEXT_PUBLIC_TESTNET_RPC || getFullnodeUrl('testnet');
     case 'mainnet':
-      return (
-        process.env.NEXT_PUBLIC_MAINNET_RPC ||
-        'https://fullnode.mainnet.sui.io:443'
-      );
+      return process.env.NEXT_PUBLIC_MAINNET_RPC || getFullnodeUrl('mainnet');
     default:
-      return (
-        process.env.NEXT_PUBLIC_DEVNET_RPC ||
-        'https://fullnode.devnet.sui.io:443'
-      );
+      return process.env.NEXT_PUBLIC_DEVNET_RPC || getFullnodeUrl('devnet');
   }
 }
 
