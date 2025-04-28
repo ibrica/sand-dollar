@@ -3,7 +3,8 @@ import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { toB64 } from '@mysten/sui.js/utils';
 
 console.log('process.env.NEXT_PUBLIC_NETWORK', process.env.NEXT_PUBLIC_NETWORK);
-const NETWORK = process.env.NEXT_PUBLIC_NETWORK || 'devnet';
+console.log('package id', process.env.NEXT_PUBLIC_PACKAGE_ID);
+const NETWORK = process.env.NEXT_PUBLIC_NETWORK || 'testnet';
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '';
 const MODULE_NAME = process.env.NEXT_PUBLIC_MODULE_NAME || 'sand_dollar';
 
@@ -54,9 +55,7 @@ export async function createEscrowMintNft(
 ) {
   const tx = new TransactionBlock();
 
-  // Set the sender for the transaction
   tx.setSender(account.address);
-
   const coin = tx.splitCoins(tx.object(coinObjectId), [tx.pure(amount)]);
 
   const clock = tx.object('0x6');
@@ -67,7 +66,8 @@ export async function createEscrowMintNft(
     arguments: [coin, tx.pure(yieldProvider), clock],
   });
 
-  // Serialize the transaction before sending with the client
+  tx.setGasBudget(100_000_000); // 0.1 SUI
+
   const serializedTx = await tx.build({ client: suiClient });
   const result = await wallet.signAndExecuteTransaction(serializedTx, account);
 
