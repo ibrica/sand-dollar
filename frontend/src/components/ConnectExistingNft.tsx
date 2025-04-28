@@ -70,27 +70,21 @@ export function ConnectExistingNft() {
       const amount = BigInt(parseFloat(data.amount) * 1_000_000_000); // Convert to MIST (9 decimals)
       const yieldProvider = parseInt(data.yieldProvider) as YieldProvider;
       
-      // Find the NFT type from selected NFT
-      const selectedNft = nfts.find(nft => nft.data?.objectId === data.nftObject);
-      const nftType = selectedNft?.data?.type || '';
-      
       await createEscrowWithNft(
-        {
-          signAndExecuteTransaction: (tx, account) => signAndExecuteTransaction(tx, account),
-          reportTransactionEffects: reportTransactionEffects
-        },
+        signAndExecuteTransaction,
+        reportTransactionEffects,
         '0x2::sui::SUI', // Coin type
         data.coinObject,
         amount,
         data.nftObject,
-        nftType,
+        '0x2::nft::NFT', // NFT type
         yieldProvider,
-        currentAccount
+        currentAccount,
       );
       
-      alert('Escrow created successfully with existing NFT!');
+      alert('Escrow created successfully!');
     } catch (error) {
-      console.error('Error creating escrow with NFT:', error);
+      console.error('Error creating escrow:', error);
       alert('Failed to create escrow. See console for details.');
     } finally {
       setIsLoading(false);

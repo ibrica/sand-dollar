@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mysten/dapp-kit": "^0.16.0",
     "@mysten/sui.js": "^0.50.0",
     "@mysten/wallet-standard": "^0.14.4",
     "clsx": "^2.1.0",

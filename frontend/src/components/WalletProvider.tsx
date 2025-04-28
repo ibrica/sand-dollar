@@ -1,227 +1,124 @@
 'use client';
 
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext } from 'react';
 import { 
-  getWallets, 
-  type Wallet, 
-  type WalletAccount,
-  SuiFeatures,
-  ConnectFeature, 
-  EventsFeature,
-  DisconnectFeature,
-  SuiSignTransactionBlockFeature,
-  SuiSignAndExecuteTransactionBlockFeature,
-  SuiSignTransactionFeature,
-  SuiSignAndExecuteTransactionFeature,
-  SuiReportTransactionEffectsFeature,
-  WalletsEventsListeners
-} from '@mysten/wallet-standard';
+  SuiClientProvider, 
+  WalletProvider as DappKitWalletProvider,
+  createNetworkConfig,
+  useCurrentWallet,
+  useSuiClient
+} from '@mysten/dapp-kit';
+import { getFullnodeUrl } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { toB64 } from '@mysten/sui.js/utils';
+import { WalletAccount } from '@mysten/wallet-standard';
 
-// Define network type
-const NETWORK = (process.env.NEXT_PUBLIC_NETWORK || 'devnet') as 'devnet' | 'testnet' | 'mainnet';
+type Network = 'testnet' | 'mainnet' | 'devnet' | 'localnet';
+const NETWORK = (process.env.NEXT_PUBLIC_NETWORK || 'testnet') as Network;
 
-// Define wallet context type
+const { networkConfig } = createNetworkConfig({
+  testnet: { url: getFullnodeUrl('testnet') },
+  mainnet: { url: getFullnodeUrl('mainnet') },
+  devnet: { url: getFullnodeUrl('devnet') },
+  localnet: { url: process.env.NEXT_PUBLIC_LOCAL_RPC || 'http://localhost:9000' },
+});
+
 interface WalletContextType {
-  wallets: Wallet[];
-  selectedWallet: Wallet | null;
-  accounts: WalletAccount[];
-  connectWallet: (walletName: string) => Promise<void>;
-  disconnectWallet: () => Promise<void>;
-  signAndExecuteTransaction: (transactionBlock: any, account: WalletAccount) => Promise<any>;
-  signTransaction: (transactionBlock: any, account: WalletAccount) => Promise<any>;
+  signAndExecuteTransaction: (tx: TransactionBlock, account: WalletAccount) => Promise<any>;
+  signTransaction: (tx: TransactionBlock, account: WalletAccount) => Promise<any>;
   reportTransactionEffects: (effects: any, account: WalletAccount) => Promise<void>;
 }
 
-// Create context
 const WalletContext = createContext<WalletContextType>({
-  wallets: [],
-  selectedWallet: null,
-  accounts: [],
-  connectWallet: async () => {},
-  disconnectWallet: async () => {},
   signAndExecuteTransaction: async () => null,
   signTransaction: async () => null,
   reportTransactionEffects: async () => {},
 });
 
-// Custom hook to use wallet context
-export const useWallet = () => useContext(WalletContext);
+export const useWalletContext = () => useContext(WalletContext);
 
-// Helper function to check if a wallet has a specific feature
-function hasFeature<T extends keyof SuiFeatures | keyof ConnectFeature | keyof EventsFeature | keyof DisconnectFeature>(
-  wallet: Wallet,
-  feature: T
-): boolean {
-  return !!wallet.features[feature];
+interface WalletProviderProps {
+  children: ReactNode;
 }
 
-// Wallet provider component
-export function WalletProvider({ children }: { children: ReactNode }) {
-  const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
-  const [accounts, setAccounts] = useState<WalletAccount[]>([]);
+function WalletProviderContent({ children }: WalletProviderProps) {
+  const wallet = useCurrentWallet();
+  const suiClient = useSuiClient();
 
-  // Initialize available wallets
-  useEffect(() => {
-    const availableWallets = getWallets().get();
-    
-    // Filter out duplicate wallets by name
-    const uniqueWallets = Array.from(
-      availableWallets.reduce((map, wallet) => {
-        if (!map.has(wallet.name)) {
-          map.set(wallet.name, wallet);
-        }
-        return map;
-      }, new Map()).values()
-    );
-    
-    setWallets([...uniqueWallets]);
+  const signAndExecuteTransaction = async (
+    tx: TransactionBlock,
+    account: WalletAccount
+  ) => {
+    if (!wallet.isConnected || !wallet.currentWallet) {
+      throw new Error('No wallet connected');
+    }
 
-    // Subscribe to wallet changes
-    const unsubscribe = getWallets().on('walletsChanged' as keyof WalletsEventsListeners, () => {
-      const updatedWallets = getWallets().get();
-      // Apply the same filtering for updates
-      const updatedUniqueWallets = Array.from(
-        updatedWallets.reduce((map, wallet) => {
-          if (!map.has(wallet.name)) {
-            map.set(wallet.name, wallet);
-          }
-          return map;
-        }, new Map()).values()
-      );
-      setWallets([...updatedUniqueWallets]);
+    const feature = wallet.currentWallet.features['sui:signAndExecuteTransactionBlock'];
+    if (!feature) {
+      throw new Error('Wallet does not support signAndExecuteTransactionBlock');
+    }
+
+    const result = await feature.signAndExecuteTransactionBlock({
+      transactionBlock: tx as any, // Type assertion needed due to SDK type mismatch
+      account,
+      chain: `sui:${NETWORK}`,
     });
 
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  // Connect to wallet
-  const connectWallet = async (walletName: string) => {
-    const wallet = wallets.find(w => w.name === walletName);
-    if (!wallet) return;
-
-    if (hasFeature(wallet, 'standard:connect')) {
-      const connectFeature = wallet.features['standard:connect'] as ConnectFeature['standard:connect'];
-      await connectFeature.connect();
-      setSelectedWallet(wallet);
-      setAccounts([...wallet.accounts]);
-    }
+    return result;
   };
 
-  // Disconnect wallet
-  const disconnectWallet = async () => {
-    if (selectedWallet && hasFeature(selectedWallet, 'standard:disconnect')) {
-      const disconnectFeature = selectedWallet.features['standard:disconnect'] as DisconnectFeature['standard:disconnect'];
-      await disconnectFeature.disconnect();
+  const signTransaction = async (
+    tx: TransactionBlock,
+    account: WalletAccount
+  ) => {
+    if (!wallet.isConnected || !wallet.currentWallet) {
+      throw new Error('No wallet connected');
     }
-    setSelectedWallet(null);
-    setAccounts([]);
-  };
 
-  // Handle events from selected wallet
-  useEffect(() => {
-    if (!selectedWallet || !hasFeature(selectedWallet, 'standard:events')) return;
+    const feature = wallet.currentWallet.features['sui:signTransactionBlock'];
+    if (!feature) {
+      throw new Error('Wallet does not support signTransactionBlock');
+    }
 
-    const eventsFeature = selectedWallet.features['standard:events'] as EventsFeature['standard:events'];
-    const unsubscribe = eventsFeature.on('change', (e: { accounts?: WalletAccount[] }) => {
-      if (e.accounts) {
-        setAccounts([...selectedWallet.accounts]);
-      }
+    return feature.signTransactionBlock({
+      transactionBlock: tx as any, // Type assertion needed due to SDK type mismatch
+      account,
+      chain: `sui:${NETWORK}`,
     });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [selectedWallet]);
-
-  // Sign and execute transaction
-  const signAndExecuteTransaction = async (transactionBlock: any, account: WalletAccount) => {
-    if (!selectedWallet) throw new Error('No wallet connected');
-
-    if (hasFeature(selectedWallet, 'sui:signAndExecuteTransaction')) {
-      const signAndExecuteFeature = selectedWallet.features['sui:signAndExecuteTransaction'] as 
-        SuiSignAndExecuteTransactionFeature['sui:signAndExecuteTransaction'];
-      
-      return signAndExecuteFeature.signAndExecuteTransaction({
-        transaction: transactionBlock,
-        account,
-        chain: `sui:${NETWORK}`
-      });
-    } else if (hasFeature(selectedWallet, 'sui:signAndExecuteTransactionBlock')) {
-      // Fallback for wallets that haven't updated yet
-      const signAndExecuteBlockFeature = selectedWallet.features['sui:signAndExecuteTransactionBlock'] as 
-        SuiSignAndExecuteTransactionBlockFeature['sui:signAndExecuteTransactionBlock'];
-      
-      return signAndExecuteBlockFeature.signAndExecuteTransactionBlock({
-        transactionBlock,
-        account,
-        chain: `sui:${NETWORK}`,
-        options: {
-          showEffects: true,
-          showEvents: true,
-        }
-      });
-    }
-    
-    throw new Error('Wallet does not support transaction execution');
   };
 
-  // Sign transaction only
-  const signTransaction = async (transactionBlock: any, account: WalletAccount) => {
-    if (!selectedWallet) throw new Error('No wallet connected');
-
-    if (hasFeature(selectedWallet, 'sui:signTransaction')) {
-      const signFeature = selectedWallet.features['sui:signTransaction'] as 
-        SuiSignTransactionFeature['sui:signTransaction'];
-      
-      return signFeature.signTransaction({
-        transaction: transactionBlock,
-        account,
-        chain: `sui:${NETWORK}`
-      });
-    } else if (hasFeature(selectedWallet, 'sui:signTransactionBlock')) {
-      // Fallback for wallets that haven't updated yet
-      const signBlockFeature = selectedWallet.features['sui:signTransactionBlock'] as 
-        SuiSignTransactionBlockFeature['sui:signTransactionBlock'];
-      
-      return signBlockFeature.signTransactionBlock({
-        transactionBlock,
-        account,
-        chain: `sui:${NETWORK}`
-      });
-    }
-    
-    throw new Error('Wallet does not support transaction signing');
-  };
-
-  // Report transaction effects
   const reportTransactionEffects = async (effects: any, account: WalletAccount) => {
-    if (!selectedWallet || !hasFeature(selectedWallet, 'sui:reportTransactionEffects')) return;
+    if (!wallet.isConnected || !wallet.currentWallet) return;
 
-    const reportFeature = selectedWallet.features['sui:reportTransactionEffects'] as 
-      SuiReportTransactionEffectsFeature['sui:reportTransactionEffects'];
-    
-    await reportFeature.reportTransactionEffects({
+    const feature = wallet.currentWallet.features['sui:reportTransactionEffects'];
+    if (!feature) return;
+
+    await feature.reportTransactionEffects({
       effects,
       account,
-      chain: `sui:${NETWORK}`
+      chain: `sui:${NETWORK}`,
     });
   };
 
   return (
-    <WalletContext.Provider value={{
-      wallets,
-      selectedWallet,
-      accounts,
-      connectWallet,
-      disconnectWallet,
-      signAndExecuteTransaction,
-      signTransaction,
-      reportTransactionEffects
-    }}>
+    <WalletContext.Provider
+      value={{
+        signAndExecuteTransaction,
+        signTransaction,
+        reportTransactionEffects,
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
-} 
+}
+
+export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
+  return (
+    <SuiClientProvider networks={networkConfig} defaultNetwork={NETWORK}>
+      <DappKitWalletProvider>
+        <WalletProviderContent>{children}</WalletProviderContent>
+      </DappKitWalletProvider>
+    </SuiClientProvider>
+  );
+}; 

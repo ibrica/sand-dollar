@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWallet } from './WalletProvider';
+import { useWalletContext } from './WalletProvider';
+import { useCurrentWallet } from '@mysten/dapp-kit';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { createEscrowMintNft, getUserCoins, YieldProvider } from '@/lib/sui';
 
@@ -12,13 +13,14 @@ type CreateEscrowFormInputs = {
 };
 
 export function CreateEscrow() {
-  const { accounts, selectedWallet, signAndExecuteTransaction, reportTransactionEffects } = useWallet();
+  const { signAndExecuteTransaction, reportTransactionEffects } = useWalletContext();
+  const wallet = useCurrentWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [coins, setCoins] = useState<any[]>([]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<CreateEscrowFormInputs>();
 
-  const currentAccount = accounts?.[0];
+  const currentAccount = wallet.currentWallet?.accounts[0];
 
   useEffect(() => {
     if (currentAccount?.address) {
@@ -38,23 +40,33 @@ export function CreateEscrow() {
   };
 
   const onSubmit: SubmitHandler<CreateEscrowFormInputs> = async (data) => {
-    if (!currentAccount || !selectedWallet) return;
+    if (!currentAccount || !wallet.currentWallet) return;
     
     setIsLoading(true);
     try {
       const amount = BigInt(parseFloat(data.amount) * 1_000_000_000); // Convert to MIST (9 decimals)
       const yieldProvider = parseInt(data.yieldProvider) as YieldProvider;
       
+      // Use the same coin for both escrow and gas
+      const selectedCoin = coins.find(coin => coin.coinObjectId === data.coinObject);
+      
+      if (!selectedCoin) {
+        throw new Error('Selected coin not found');
+      }
+
+      const totalAmount = amount + BigInt(10_000_000); // Amount + gas (0.01 SUI)
+      if (Number(selectedCoin.balance) < Number(totalAmount)) {
+        throw new Error(`Insufficient balance. You need at least ${(Number(totalAmount) / 1_000_000_000).toFixed(2)} SUI (including gas)`);
+      }
+      
       await createEscrowMintNft(
-        {
-          signAndExecuteTransaction: (tx, account) => signAndExecuteTransaction(tx, account),
-          reportTransactionEffects: reportTransactionEffects
-        },
+        signAndExecuteTransaction,
+        reportTransactionEffects,
         '0x2::sui::SUI', // Coin type
         data.coinObject,
         amount,
         yieldProvider,
-        currentAccount
+        currentAccount,
       );
       
       alert('Escrow created successfully!');

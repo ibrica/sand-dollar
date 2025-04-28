@@ -1,9 +1,8 @@
 import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { toB64 } from '@mysten/sui.js/utils';
+import { WalletAccount } from '@mysten/wallet-standard';
 
-console.log('process.env.NEXT_PUBLIC_NETWORK', process.env.NEXT_PUBLIC_NETWORK);
-console.log('package id', process.env.NEXT_PUBLIC_PACKAGE_ID);
 const NETWORK = process.env.NEXT_PUBLIC_NETWORK || 'testnet';
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '';
 const MODULE_NAME = process.env.NEXT_PUBLIC_MODULE_NAME || 'sand_dollar';
@@ -25,9 +24,6 @@ export function getRpcUrl(): string {
 
 export const suiClient = new SuiClient({ url: getRpcUrl() });
 
-// Log the RPC URL being used
-console.log('Using RPC URL:', getRpcUrl());
-
 export const CONTRACT_CONFIG = {
   packageId: PACKAGE_ID,
   moduleName: MODULE_NAME,
@@ -39,40 +35,66 @@ export enum YieldProvider {
   SuiLend = 2,
 }
 
-export interface WalletInterface {
-  signAndExecuteTransaction: (tx: any, account: any) => Promise<any>;
-  signTransaction?: (tx: any, account: any) => Promise<any>;
-  reportTransactionEffects?: (effects: any, account: any) => Promise<void>;
-}
-
 export async function createEscrowMintNft(
-  wallet: WalletInterface,
+  signAndExecuteTransaction: (
+    tx: TransactionBlock,
+    account: WalletAccount
+  ) => Promise<any>,
+  reportTransactionEffects: (
+    effects: any,
+    account: WalletAccount
+  ) => Promise<void>,
   coinType: string,
   coinObjectId: string,
   amount: bigint,
   yieldProvider: YieldProvider,
-  account: any
+  account: WalletAccount
 ) {
   const tx = new TransactionBlock();
 
   tx.setSender(account.address);
-  const coin = tx.splitCoins(tx.object(coinObjectId), [tx.pure(amount)]);
+
+  // Get the coin for contract payment
+  const coinForContract = tx.splitCoins(tx.object(coinObjectId), [
+    tx.pure(amount),
+  ]);
+
+  // Get a separate coin for gas
+  const gasCoins = await suiClient.getCoins({
+    owner: account.address,
+    coinType: '0x2::sui::SUI',
+    limit: 1,
+  });
+
+  if (!gasCoins.data || gasCoins.data.length === 0) {
+    throw new Error('No gas coins found');
+  }
+
+  const gasCoin = gasCoins.data[0];
+
+  // Set the gas payment using the separate gas coin
+  tx.setGasPayment([
+    {
+      objectId: gasCoin.coinObjectId,
+      version: gasCoin.version,
+      digest: gasCoin.digest,
+    },
+  ]);
 
   const clock = tx.object('0x6');
 
   tx.moveCall({
     target: `${CONTRACT_CONFIG.packageId}::${CONTRACT_CONFIG.moduleName}::create_escrow_mint_nft`,
     typeArguments: [coinType],
-    arguments: [coin, tx.pure(yieldProvider), clock],
+    arguments: [coinForContract, tx.pure(yieldProvider), clock],
   });
 
-  tx.setGasBudget(100_000_000); // 0.1 SUI
+  tx.setGasBudget(10_000_000);
 
-  const serializedTx = await tx.build({ client: suiClient });
-  const result = await wallet.signAndExecuteTransaction(serializedTx, account);
+  const result = await signAndExecuteTransaction(tx, account);
 
-  if (wallet.reportTransactionEffects && result.effects) {
-    await wallet.reportTransactionEffects(
+  if (result.effects) {
+    await reportTransactionEffects(
       typeof result.effects === 'string'
         ? result.effects
         : toB64(result.effects),
@@ -84,14 +106,21 @@ export async function createEscrowMintNft(
 }
 
 export async function createEscrowWithNft(
-  wallet: WalletInterface,
+  signAndExecuteTransaction: (
+    tx: TransactionBlock,
+    account: WalletAccount
+  ) => Promise<any>,
+  reportTransactionEffects: (
+    effects: any,
+    account: WalletAccount
+  ) => Promise<void>,
   coinType: string,
   coinObjectId: string,
   amount: bigint,
   nftObjectId: string,
   nftType: string,
   yieldProvider: YieldProvider,
-  account: any
+  account: WalletAccount
 ) {
   const tx = new TransactionBlock();
 
@@ -105,10 +134,10 @@ export async function createEscrowWithNft(
     arguments: [coin, tx.object(nftObjectId), tx.pure(yieldProvider), clock],
   });
 
-  const result = await wallet.signAndExecuteTransaction(tx, account);
+  const result = await signAndExecuteTransaction(tx, account);
 
-  if (wallet.reportTransactionEffects && result.effects) {
-    await wallet.reportTransactionEffects(
+  if (result.effects) {
+    await reportTransactionEffects(
       typeof result.effects === 'string'
         ? result.effects
         : toB64(result.effects),
@@ -120,12 +149,19 @@ export async function createEscrowWithNft(
 }
 
 export async function redeemEscrow(
-  wallet: WalletInterface,
+  signAndExecuteTransaction: (
+    tx: TransactionBlock,
+    account: WalletAccount
+  ) => Promise<any>,
+  reportTransactionEffects: (
+    effects: any,
+    account: WalletAccount
+  ) => Promise<void>,
   escrowId: string,
   nftObjectId: string,
   nftType: string,
   coinType: string,
-  account: any
+  account: WalletAccount
 ) {
   const tx = new TransactionBlock();
 
@@ -137,10 +173,10 @@ export async function redeemEscrow(
     arguments: [tx.object(nftObjectId), tx.object(escrowId), clock],
   });
 
-  const result = await wallet.signAndExecuteTransaction(tx, account);
+  const result = await signAndExecuteTransaction(tx, account);
 
-  if (wallet.reportTransactionEffects && result.effects) {
-    await wallet.reportTransactionEffects(
+  if (result.effects) {
+    await reportTransactionEffects(
       typeof result.effects === 'string'
         ? result.effects
         : toB64(result.effects),
@@ -152,9 +188,16 @@ export async function redeemEscrow(
 }
 
 export async function burnEscrowNft(
-  wallet: WalletInterface,
+  signAndExecuteTransaction: (
+    tx: TransactionBlock,
+    account: WalletAccount
+  ) => Promise<any>,
+  reportTransactionEffects: (
+    effects: any,
+    account: WalletAccount
+  ) => Promise<void>,
   nftObjectId: string,
-  account: any
+  account: WalletAccount
 ) {
   const tx = new TransactionBlock();
 
@@ -163,10 +206,10 @@ export async function burnEscrowNft(
     arguments: [tx.object(nftObjectId)],
   });
 
-  const result = await wallet.signAndExecuteTransaction(tx, account);
+  const result = await signAndExecuteTransaction(tx, account);
 
-  if (wallet.reportTransactionEffects && result.effects) {
-    await wallet.reportTransactionEffects(
+  if (result.effects) {
+    await reportTransactionEffects(
       typeof result.effects === 'string'
         ? result.effects
         : toB64(result.effects),

@@ -71,25 +71,17 @@ export function RedeemNft() {
     
     setIsLoading(true);
     try {
-      // Find the NFT type from selected NFT
-      const selectedNft = nfts.find(nft => nft.data?.objectId === data.nftObject);
-      const nftType = selectedNft?.data?.type || '';
-      
       await redeemEscrow(
-        {
-          signAndExecuteTransaction: (tx, account) => signAndExecuteTransaction(tx, account),
-          reportTransactionEffects: reportTransactionEffects
-        },
+        signAndExecuteTransaction,
+        reportTransactionEffects,
         data.escrowObject,
         data.nftObject,
-        nftType,
-        data.coinType || '0x2::sui::SUI',
-        currentAccount
+        '0x2::nft::NFT', // NFT type
+        '0x2::sui::SUI', // Coin type
+        currentAccount,
       );
       
       alert('Escrow redeemed successfully!');
-      fetchUserEscrows();
-      fetchUserNfts();
     } catch (error) {
       console.error('Error redeeming escrow:', error);
       alert('Failed to redeem escrow. See console for details.');
@@ -98,22 +90,19 @@ export function RedeemNft() {
     }
   };
 
-  const handleBurnNft = async (nftId: string) => {
+  const handleBurn = async (nftObjectId: string) => {
     if (!currentAccount || !selectedWallet) return;
     
     setIsLoading(true);
     try {
       await burnEscrowNft(
-        {
-          signAndExecuteTransaction: (tx, account) => signAndExecuteTransaction(tx, account),
-          reportTransactionEffects: reportTransactionEffects
-        },
-        nftId,
-        currentAccount
+        signAndExecuteTransaction,
+        reportTransactionEffects,
+        nftObjectId,
+        currentAccount,
       );
       
       alert('NFT burned successfully!');
-      fetchUserNfts();
     } catch (error) {
       console.error('Error burning NFT:', error);
       alert('Failed to burn NFT. See console for details.');
@@ -193,7 +182,7 @@ export function RedeemNft() {
               <div key={nft.data?.objectId} className="flex items-center justify-between p-3 border border-border rounded bg-background">
                 <span className="text-white">{nft.data?.objectId.substring(0, 12)}... - Sand Dollar NFT</span>
                 <button
-                  onClick={() => handleBurnNft(nft.data?.objectId)}
+                  onClick={() => handleBurn(nft.data?.objectId)}
                   disabled={isLoading}
                   className="px-3 py-1 text-sm bg-error hover:bg-red-700 text-white rounded"
                 >
