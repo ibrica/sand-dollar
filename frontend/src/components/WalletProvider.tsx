@@ -1,79 +1,75 @@
 'use client';
 
-import { useCurrentWallet } from '@mysten/dapp-kit';
-import { type WalletWithFeatures } from '@mysten/wallet-standard';
-import { type StandardConnectFeature, type StandardEventsFeature, type SuiFeatures } from '@mysten/wallet-standard';
-import { createContext, useContext, ReactNode } from 'react';
+import { useWallet } from '@mysten/dapp-kit';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { WalletAccount } from '@mysten/wallet-standard';
+import { createContext, useContext, ReactNode } from 'react';
 
 interface WalletContextType {
-  signAndExecuteTransaction: (tx: TransactionBlock, account: WalletAccount) => Promise<any>;
-  signTransactionBlock: (transaction: TransactionBlock) => Promise<void>;
-  reportTransactionEffects: (effects: any, account: WalletAccount) => Promise<void>;
+  connected: boolean;
+  connecting: boolean;
+  signAndExecuteTransactionBlock: (transaction: TransactionBlock) => Promise<{ digest: string }>;
+  signTransactionBlock: (transaction: TransactionBlock) => Promise<Uint8Array>;
 }
 
-const WalletContext = createContext<WalletContextType | null>(null);
+const WalletContext = createContext<WalletContextType>({
+  connected: false,
+  connecting: false,
+  signAndExecuteTransactionBlock: async () => {
+    throw new Error('Wallet not connected');
+  },
+  signTransactionBlock: async () => {
+    throw new Error('Wallet not connected');
+  },
+});
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const wallet = useCurrentWallet();
-  const currentWallet = wallet.currentWallet as WalletWithFeatures<StandardConnectFeature & StandardEventsFeature & SuiFeatures>;
-  const currentAccount = currentWallet?.accounts[0];
+  const { 
+    currentAccount,
+    isConnecting,
+    signAndExecuteTransactionBlock: walletSignAndExecute,
+    signTransactionBlock: walletSignTransaction
+  } = useWallet();
 
-  const signAndExecuteTransaction = async (transaction: TransactionBlock, account: WalletAccount) => {
-    if (!currentWallet) {
+  const connected = !!currentAccount;
+
+  const signAndExecuteTransactionBlock = async (transaction: TransactionBlock) => {
+    if (!currentAccount) {
       throw new Error('Wallet not connected');
     }
-    if (!currentAccount) {
-      throw new Error('No account selected');
-    }
-    const signAndExecuteFeature = currentWallet.features['sui:signAndExecuteTransactionBlock'];
-    if (!signAndExecuteFeature) {
-      throw new Error('Wallet does not support signAndExecuteTransactionBlock');
-    }
 
-    return await signAndExecuteFeature.signAndExecuteTransactionBlock({
-      transactionBlock: transaction as any,
-      account: currentAccount,
-      chain: currentWallet.chains[0],
+    const result = await walletSignAndExecute({
+      transactionBlock: transaction,
     });
+
+    return { digest: result.digest };
   };
 
   const signTransactionBlock = async (transaction: TransactionBlock) => {
-    if (!currentWallet) {
+    if (!currentAccount) {
       throw new Error('Wallet not connected');
     }
-    if (!currentAccount) {
-      throw new Error('No account selected');
-    }
-    const signFeature = currentWallet.features['sui:signTransactionBlock'];
-    if (!signFeature) {
-      throw new Error('Wallet does not support signTransactionBlock');
-    }
 
-    await signFeature.signTransactionBlock({
-      transactionBlock: transaction as any,
-      account: currentAccount,
-      chain: currentWallet.chains[0],
+    const result = await walletSignTransaction({
+      transactionBlock: transaction,
     });
-  };
 
-  const reportTransactionEffects = async (effects: any, account: WalletAccount) => {
-    // This is a placeholder function that can be expanded based on your needs
-    console.log('Transaction effects:', effects);
+    return result.bytes;
   };
 
   return (
-    <WalletContext.Provider value={{ signAndExecuteTransaction, signTransactionBlock, reportTransactionEffects }}>
+    <WalletContext.Provider
+      value={{
+        connected,
+        connecting: isConnecting,
+        signAndExecuteTransactionBlock,
+        signTransactionBlock,
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
 }
 
-export function useWallet() {
-  const context = useContext(WalletContext);
-  if (!context) {
-    throw new Error('useWallet must be used within a WalletProvider');
-  }
-  return context;
-} 
+export function useWalletContext() {
+  return useContext(WalletContext);
+}
