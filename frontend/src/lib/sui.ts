@@ -2,6 +2,7 @@ import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { toB64 } from '@mysten/sui.js/utils';
 
+console.log('process.env.NEXT_PUBLIC_NETWORK', process.env.NEXT_PUBLIC_NETWORK);
 const NETWORK = process.env.NEXT_PUBLIC_NETWORK || 'devnet';
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '';
 const MODULE_NAME = process.env.NEXT_PUBLIC_MODULE_NAME || 'sand_dollar';
@@ -22,6 +23,9 @@ export function getRpcUrl(): string {
 }
 
 export const suiClient = new SuiClient({ url: getRpcUrl() });
+
+// Log the RPC URL being used
+console.log('Using RPC URL:', getRpcUrl());
 
 export const CONTRACT_CONFIG = {
   packageId: PACKAGE_ID,
@@ -60,7 +64,9 @@ export async function createEscrowMintNft(
     arguments: [coin, tx.pure(yieldProvider), clock],
   });
 
-  const result = await wallet.signAndExecuteTransaction(tx, account);
+  // Serialize the transaction before sending
+  const serializedTx = await tx.build();
+  const result = await wallet.signAndExecuteTransaction(serializedTx, account);
 
   if (wallet.reportTransactionEffects && result.effects) {
     await wallet.reportTransactionEffects(

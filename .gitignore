@@ -16,3 +16,4 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 
 # Contract is ignored via its own .gitignore file
+.env
