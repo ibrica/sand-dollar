@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useCurrentWallet } from '@mysten/dapp-kit';
-import { useWalletContext } from './WalletProvider';
+import { useWallet } from './WalletProvider';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { redeemEscrow, burnEscrowNft, getOwnedObjects } from '@/lib/sui';
 
@@ -14,7 +14,7 @@ type RedeemNftFormInputs = {
 
 export function RedeemNft() {
   const wallet = useCurrentWallet();
-  const { signAndExecuteTransaction, reportTransactionEffects } = useWalletContext();
+  const { signAndExecuteTransaction, reportTransactionEffects } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [nfts, setNfts] = useState<any[]>([]);
   const [escrows, setEscrows] = useState<any[]>([]);

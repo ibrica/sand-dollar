@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useCurrentWallet } from '@mysten/dapp-kit';
-import { useWalletContext } from './WalletProvider';
+import { useWallet } from './WalletProvider';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { 
   createEscrowWithNft, 
@@ -20,7 +20,7 @@ type ConnectExistingNftFormInputs = {
 
 export function ConnectExistingNft() {
   const wallet = useCurrentWallet();
-  const { signAndExecuteTransaction, reportTransactionEffects } = useWalletContext();
+  const { signAndExecuteTransaction, reportTransactionEffects } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [nfts, setNfts] = useState<any[]>([]);
   const [coins, setCoins] = useState<any[]>([]);
