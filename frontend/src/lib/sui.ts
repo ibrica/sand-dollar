@@ -54,6 +54,9 @@ export async function createEscrowMintNft(
 ) {
   const tx = new TransactionBlock();
 
+  // Set the sender for the transaction
+  tx.setSender(account.address);
+
   const coin = tx.splitCoins(tx.object(coinObjectId), [tx.pure(amount)]);
 
   const clock = tx.object('0x6');
@@ -64,8 +67,8 @@ export async function createEscrowMintNft(
     arguments: [coin, tx.pure(yieldProvider), clock],
   });
 
-  // Serialize the transaction before sending
-  const serializedTx = await tx.build();
+  // Serialize the transaction before sending with the client
+  const serializedTx = await tx.build({ client: suiClient });
   const result = await wallet.signAndExecuteTransaction(serializedTx, account);
 
   if (wallet.reportTransactionEffects && result.effects) {
