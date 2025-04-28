@@ -1,124 +1,79 @@
 'use client';
 
-import { ReactNode, createContext, useContext } from 'react';
-import { 
-  SuiClientProvider, 
-  WalletProvider as DappKitWalletProvider,
-  createNetworkConfig,
-  useCurrentWallet,
-  useSuiClient
-} from '@mysten/dapp-kit';
-import { getFullnodeUrl } from '@mysten/sui.js/client';
+import { useCurrentWallet } from '@mysten/dapp-kit';
+import { type WalletWithFeatures } from '@mysten/wallet-standard';
+import { type StandardConnectFeature, type StandardEventsFeature, type SuiFeatures } from '@mysten/wallet-standard';
+import { createContext, useContext, ReactNode } from 'react';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { toB64 } from '@mysten/sui.js/utils';
 import { WalletAccount } from '@mysten/wallet-standard';
-
-type Network = 'testnet' | 'mainnet' | 'devnet' | 'localnet';
-const NETWORK = (process.env.NEXT_PUBLIC_NETWORK || 'testnet') as Network;
-
-const { networkConfig } = createNetworkConfig({
-  testnet: { url: getFullnodeUrl('testnet') },
-  mainnet: { url: getFullnodeUrl('mainnet') },
-  devnet: { url: getFullnodeUrl('devnet') },
-  localnet: { url: process.env.NEXT_PUBLIC_LOCAL_RPC || 'http://localhost:9000' },
-});
 
 interface WalletContextType {
   signAndExecuteTransaction: (tx: TransactionBlock, account: WalletAccount) => Promise<any>;
-  signTransaction: (tx: TransactionBlock, account: WalletAccount) => Promise<any>;
+  signTransactionBlock: (transaction: TransactionBlock) => Promise<void>;
   reportTransactionEffects: (effects: any, account: WalletAccount) => Promise<void>;
 }
 
-const WalletContext = createContext<WalletContextType>({
-  signAndExecuteTransaction: async () => null,
-  signTransaction: async () => null,
-  reportTransactionEffects: async () => {},
-});
+const WalletContext = createContext<WalletContextType | null>(null);
 
-export const useWalletContext = () => useContext(WalletContext);
-
-interface WalletProviderProps {
-  children: ReactNode;
-}
-
-function WalletProviderContent({ children }: WalletProviderProps) {
+export function WalletProvider({ children }: { children: ReactNode }) {
   const wallet = useCurrentWallet();
-  const suiClient = useSuiClient();
+  const currentWallet = wallet.currentWallet as WalletWithFeatures<StandardConnectFeature & StandardEventsFeature & SuiFeatures>;
+  const currentAccount = currentWallet?.accounts[0];
 
-  const signAndExecuteTransaction = async (
-    tx: TransactionBlock,
-    account: WalletAccount
-  ) => {
-    if (!wallet.isConnected || !wallet.currentWallet) {
-      throw new Error('No wallet connected');
+  const signAndExecuteTransaction = async (transaction: TransactionBlock, account: WalletAccount) => {
+    if (!currentWallet) {
+      throw new Error('Wallet not connected');
     }
-
-    const feature = wallet.currentWallet.features['sui:signAndExecuteTransactionBlock'];
-    if (!feature) {
+    if (!currentAccount) {
+      throw new Error('No account selected');
+    }
+    const signAndExecuteFeature = currentWallet.features['sui:signAndExecuteTransactionBlock'];
+    if (!signAndExecuteFeature) {
       throw new Error('Wallet does not support signAndExecuteTransactionBlock');
     }
 
-    const result = await feature.signAndExecuteTransactionBlock({
-      transactionBlock: tx as any, // Type assertion needed due to SDK type mismatch
-      account,
-      chain: `sui:${NETWORK}`,
+    return await signAndExecuteFeature.signAndExecuteTransactionBlock({
+      transactionBlock: transaction as any,
+      account: currentAccount,
+      chain: currentWallet.chains[0],
     });
-
-    return result;
   };
 
-  const signTransaction = async (
-    tx: TransactionBlock,
-    account: WalletAccount
-  ) => {
-    if (!wallet.isConnected || !wallet.currentWallet) {
-      throw new Error('No wallet connected');
+  const signTransactionBlock = async (transaction: TransactionBlock) => {
+    if (!currentWallet) {
+      throw new Error('Wallet not connected');
     }
-
-    const feature = wallet.currentWallet.features['sui:signTransactionBlock'];
-    if (!feature) {
+    if (!currentAccount) {
+      throw new Error('No account selected');
+    }
+    const signFeature = currentWallet.features['sui:signTransactionBlock'];
+    if (!signFeature) {
       throw new Error('Wallet does not support signTransactionBlock');
     }
 
-    return feature.signTransactionBlock({
-      transactionBlock: tx as any, // Type assertion needed due to SDK type mismatch
-      account,
-      chain: `sui:${NETWORK}`,
+    await signFeature.signTransactionBlock({
+      transactionBlock: transaction as any,
+      account: currentAccount,
+      chain: currentWallet.chains[0],
     });
   };
 
   const reportTransactionEffects = async (effects: any, account: WalletAccount) => {
-    if (!wallet.isConnected || !wallet.currentWallet) return;
-
-    const feature = wallet.currentWallet.features['sui:reportTransactionEffects'];
-    if (!feature) return;
-
-    await feature.reportTransactionEffects({
-      effects,
-      account,
-      chain: `sui:${NETWORK}`,
-    });
+    // This is a placeholder function that can be expanded based on your needs
+    console.log('Transaction effects:', effects);
   };
 
   return (
-    <WalletContext.Provider
-      value={{
-        signAndExecuteTransaction,
-        signTransaction,
-        reportTransactionEffects,
-      }}
-    >
+    <WalletContext.Provider value={{ signAndExecuteTransaction, signTransactionBlock, reportTransactionEffects }}>
       {children}
     </WalletContext.Provider>
   );
 }
 
-export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
-  return (
-    <SuiClientProvider networks={networkConfig} defaultNetwork={NETWORK}>
-      <DappKitWalletProvider>
-        <WalletProviderContent>{children}</WalletProviderContent>
-      </DappKitWalletProvider>
-    </SuiClientProvider>
-  );
-}; 
+export function useWallet() {
+  const context = useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWallet must be used within a WalletProvider');
+  }
+  return context;
+} 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWalletContext } from './WalletProvider';
+import { useWallet } from './WalletProvider';
 import { useCurrentWallet } from '@mysten/dapp-kit';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { createEscrowMintNft, getUserCoins, YieldProvider } from '@/lib/sui';
@@ -13,7 +13,7 @@ type CreateEscrowFormInputs = {
 };
 
 export function CreateEscrow() {
-  const { signAndExecuteTransaction, reportTransactionEffects } = useWalletContext();
+  const { signAndExecuteTransaction, reportTransactionEffects } = useWallet();
   const wallet = useCurrentWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [coins, setCoins] = useState<any[]>([]);
