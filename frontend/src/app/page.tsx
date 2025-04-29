@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { Logo } from '@/components/Logo';
 import { FeaturesTabs } from '@/components/FeaturesTabs';
+import Dashboard from '@/components/Dashboard';
 
 export default function Home() {
   const { isConnected } = useCurrentWallet();
@@ -51,17 +52,7 @@ export default function Home() {
 
             {/* Right Column - Dashboard Preview */}
             <div className="bg-background-light rounded-2xl p-8 shadow-xl">
-              <h2 className="text-2xl font-semibold text-white mb-4">
-                Dashboard Preview
-              </h2>
-              <p className="text-gray-300">
-                Your NFT portfolio analytics at a glance
-              </p>
-              <div className="mt-6 aspect-video bg-background rounded-lg flex items-center justify-center">
-                <div className="text-gray-500">
-                  Preview coming soon...
-                </div>
-              </div>
+              <Dashboard />
             </div>
           </div>
         </div>
