@@ -3,15 +3,11 @@
 import { useState } from 'react';
 import { useCurrentWallet } from '@mysten/dapp-kit';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
 import { ConnectWallet } from '@/components/ConnectWallet';
-import { CreateEscrow } from '@/components/CreateEscrow';
-import { ConnectExistingNft } from '@/components/ConnectExistingNft';
-import { RedeemNft } from '@/components/RedeemNft';
 import { Logo } from '@/components/Logo';
+import { FeaturesTabs } from '@/components/FeaturesTabs';
 
 export default function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const { isConnected } = useCurrentWallet();
 
   return (
@@ -38,13 +34,7 @@ export default function Home() {
               Create, manage, and trade NFTs that generate yield. Unlock the potential of your digital assets with Sand Dollar.
             </p>
             <div className="mt-10 flex gap-x-6">
-              {isConnected ? (
-                <Button size="lg" onClick={() => setIsModalOpen(true)}>
-                  Get Started
-                </Button>
-              ) : (
-                <ConnectWallet />
-              )}
+              {!isConnected && <ConnectWallet />}
               <Button size="lg" variant="outline">
                 Learn More
               </Button>
@@ -72,33 +62,16 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Features Modal - Only shown when wallet is connected */}
+      {/* Features Section - Only shown when wallet is connected */}
       {isConnected && (
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title="Get Started with Sand Dollar"
-        >
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-lg font-medium text-white mb-2">Create New Yield NFT</h4>
-              <CreateEscrow />
-            </div>
-            
-            <div className="border-t border-gray-700 pt-6">
-              <h4 className="text-lg font-medium text-white mb-2">Connect Existing NFT</h4>
-              <ConnectExistingNft />
-            </div>
-            
-            <div className="border-t border-gray-700 pt-6">
-              <h4 className="text-lg font-medium text-white mb-2">Redeem or Burn NFT</h4>
-              <RedeemNft />
-            </div>
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto bg-background-light rounded-2xl p-8 shadow-xl">
+            <FeaturesTabs />
           </div>
-        </Modal>
+        </div>
       )}
       
-      <footer className="border-t border-border py-8">
+      <footer className="border-t border-border py-8 mt-auto">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
