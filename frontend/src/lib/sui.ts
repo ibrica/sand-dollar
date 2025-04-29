@@ -157,6 +157,8 @@ export async function redeemEscrow(
 ) {
   const tx = new Transaction();
 
+  tx.setGasBudget(10000000n);
+
   const clock = tx.object('0x6');
 
   tx.moveCall({
