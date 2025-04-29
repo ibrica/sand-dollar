@@ -22,8 +22,8 @@ export default function Home() {
       </header>
 
       {/* Hero Section with Dashboard Preview */}
-      <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="mx-auto max-w-7xl py-32 sm:py-48 lg:py-32">
+      <div className="relative isolate px-6 pt-8 lg:px-8">
+        <div className="mx-auto max-w-7xl py-16 sm:py-24 lg:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Column - Hero Content */}
             <div>
