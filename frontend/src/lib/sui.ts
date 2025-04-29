@@ -1,7 +1,6 @@
 import { SuiClient } from '@mysten/sui/client';
 import { getFullnodeUrl } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
-import { toB64 } from '@mysten/sui/utils';
 import { type WalletAccount } from '@mysten/wallet-standard';
 
 const NETWORK = process.env.NEXT_PUBLIC_NETWORK || 'testnet';
@@ -60,14 +59,20 @@ export async function createEscrowMintNft(
   const gasCoins = await suiClient.getCoins({
     owner: account.address,
     coinType: '0x2::sui::SUI',
-    limit: 1,
+    limit: 5,
   });
 
-  if (!gasCoins.data || gasCoins.data.length === 0) {
+  if (!gasCoins.data) {
     throw new Error('No gas coins found');
   }
 
-  const gasCoin = gasCoins.data[0];
+  const gasCoin = gasCoins.data.find(
+    (coin) => coin.coinObjectId !== coinObjectId
+  );
+
+  if (!gasCoin) {
+    throw new Error('No coin available for gas payment');
+  }
 
   // Set the gas payment using the separate gas coin
   tx.setGasPayment([
