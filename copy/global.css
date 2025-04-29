@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #5065D8;
+  --secondary-color: #172FD0;
+  --accent-color: #00F2FE;
+  --background-color: #0B122E;
+  --background-light: #1A2348;
+  --text-color: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --border-color: #2E3A5B;
+  --success-color: #10B981;
+  --warning-color: #F59E0B;
+  --error-color: #EF4444;
+  --sand-color: #D9CBB9;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+  background: var(--background-color);
+  color: var(--text-color);
+}
+
+body {
+  background: linear-gradient(to bottom, var(--background-color), var(--background-light));
+}
+
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+/* Logo styling */
+.logo-svg {
+  transition: all 0.3s ease;
+}
+
+.logo-svg:hover {
+  filter: drop-shadow(0px 0px 5px rgba(217, 203, 185, 0.5));
+  transform: scale(1.05);
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-4;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center py-3 px-6 font-medium rounded cursor-pointer transition-all duration-300;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-secondary;
+  }
+
+  .btn-outline {
+    @apply bg-transparent border border-border hover:border-accent hover:text-accent;
+  }
+
+  .card {
+    @apply bg-background-light rounded-lg p-6 shadow-card border border-border;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+
+  .grid-layout {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
+} 

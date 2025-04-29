@@ -20,42 +20,47 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section with Dashboard Preview */}
       <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="mx-auto max-w-7xl py-32 sm:py-48 lg:py-56">
-          <div className="text-left">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              Sand Dollar
-            </h1>
-            <h2 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mt-2">
-              Yield-Generating NFTs<br />on Sui
-            </h2>
-            <p className="mt-6 text-lg leading-8 text-gray-300 max-w-2xl">
-              Create, manage, and trade NFTs that generate yield. Unlock the potential of your digital assets with Sand Dollar.
-            </p>
-            <div className="mt-10 flex gap-x-6">
-              {!isConnected && <ConnectWallet />}
-              <Button size="lg" variant="outline">
-                Learn More
-              </Button>
+        <div className="mx-auto max-w-7xl py-32 sm:py-48 lg:py-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Hero Content */}
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Sand Dollar</span>
+              </h1>
+              <h2 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mt-2">
+                Yield-Generating NFTs<br />on Sui
+              </h2>
+              <p className="mt-6 text-lg leading-8 text-gray-300 max-w-2xl">
+                Create, manage, and trade NFTs that generate yield. Unlock the potential of your digital assets with Sand Dollar.
+              </p>
+              <div className="mt-10 flex gap-x-6">
+                {!isConnected ? (
+                  <ConnectWallet />
+                ) : (
+                  <Button size="lg" className="bg-primary hover:bg-secondary text-white">
+                    Get Started
+                  </Button>
+                )}
+                <Button size="lg" variant="outline">
+                  Learn More
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Preview Section */}
-      <div className="relative isolate px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="bg-background-light rounded-2xl p-8 shadow-xl">
-            <h2 className="text-2xl font-semibold text-white mb-4">
-              Dashboard Preview
-            </h2>
-            <p className="text-gray-300">
-              Your NFT portfolio analytics at a glance
-            </p>
-            <div className="mt-6 aspect-video bg-background-dark rounded-lg flex items-center justify-center">
-              <div className="text-gray-500">
-                Preview coming soon...
+            {/* Right Column - Dashboard Preview */}
+            <div className="bg-background-light rounded-2xl p-8 shadow-xl">
+              <h2 className="text-2xl font-semibold text-white mb-4">
+                Dashboard Preview
+              </h2>
+              <p className="text-gray-300">
+                Your NFT portfolio analytics at a glance
+              </p>
+              <div className="mt-6 aspect-video bg-background rounded-lg flex items-center justify-center">
+                <div className="text-gray-500">
+                  Preview coming soon...
+                </div>
               </div>
             </div>
           </div>
@@ -65,7 +70,7 @@ export default function Home() {
       {/* Features Section - Only shown when wallet is connected */}
       {isConnected && (
         <div className="container mx-auto px-4 py-16">
-          <div className="max-w-4xl mx-auto bg-background-light rounded-2xl p-8 shadow-xl">
+          <div className="max-w-4xl mx-auto bg-background rounded-2xl p-8 shadow-xl">
             <FeaturesTabs />
           </div>
         </div>

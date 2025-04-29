@@ -5,7 +5,7 @@ import clsx from 'clsx';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'connect';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   fullWidth?: boolean;
@@ -30,9 +30,9 @@ export function Button({
           'w-full': fullWidth,
           'opacity-50 cursor-not-allowed': disabled || isLoading,
           // Variants
-          'bg-primary hover:bg-primary/90 text-white': variant === 'primary',
+          'bg-primary hover:bg-secondary text-white': variant === 'primary' || variant === 'connect',
           'bg-secondary hover:bg-secondary/90 text-white': variant === 'secondary',
-          'border-2 border-primary text-primary hover:bg-primary hover:text-white': variant === 'outline',
+          'border border-border text-white hover:border-accent hover:text-accent': variant === 'outline',
           // Sizes
           'px-3 py-1.5 text-sm': size === 'sm',
           'px-4 py-2 text-base': size === 'md',
