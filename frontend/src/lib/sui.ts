@@ -116,8 +116,7 @@ export async function createEscrowWithNft(
   amount: bigint,
   nftObjectId: string,
   nftType: string,
-  yieldProvider: YieldProvider,
-  account: WalletAccount
+  yieldProvider: YieldProvider
 ) {
   const tx = new Transaction();
 
@@ -154,8 +153,7 @@ export async function redeemEscrow(
   escrowId: string,
   nftObjectId: string,
   nftType: string,
-  coinType: string,
-  account: WalletAccount
+  coinType: string
 ) {
   const tx = new Transaction();
 
@@ -187,8 +185,7 @@ export async function burnEscrowNft(
     transaction: Transaction
   ) => Promise<{ digest: string }>,
   reportTransactionEffects: (effects: any) => Promise<void>,
-  nftObjectId: string,
-  account: WalletAccount
+  nftObjectId: string
 ) {
   const tx = new Transaction();
 

@@ -62,7 +62,6 @@ export function RedeemNft() {
           data.nftObjectId,
           '0x2::nft::NFT', // NFT type
           '0x2::sui::SUI', // Coin type
-          currentAccount,
         );
         alert('NFT redeemed successfully!');
       } else {
@@ -78,7 +77,6 @@ export function RedeemNft() {
             console.log('Transaction effects:', effects);
           },
           data.nftObjectId,
-          currentAccount,
         );
         alert('NFT burned successfully!');
       }
