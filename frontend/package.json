@@ -11,9 +11,10 @@
   "dependencies": {
     "@headlessui/react": "^2.2.2",
     "@heroicons/react": "^2.2.0",
-    "@mysten/dapp-kit": "^0.16.0",
+    "@mysten/dapp-kit": "^0.16.1",
     "@mysten/sui": "^1.29.0",
     "@mysten/wallet-standard": "^0.14.7",
+    "@radix-ui/themes": "^3.2.1",
     "@tanstack/react-query": "^5.74.7",
     "clsx": "^2.1.0",
     "next": "15.3.0",

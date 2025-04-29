@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useCurrentWallet } from '@mysten/dapp-kit';
-import { useWallet } from './WalletProvider';
+import { useCurrentWallet, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { redeemEscrow, burnEscrowNft, getOwnedObjects } from '@/lib/sui';
 
@@ -13,14 +12,14 @@ type RedeemNftFormInputs = {
 };
 
 export function RedeemNft() {
-  const wallet = useCurrentWallet();
-  const { signAndExecuteTransaction, reportTransactionEffects } = useWallet();
+  const { currentWallet, isConnected } = useCurrentWallet();
+  const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [isLoading, setIsLoading] = useState(false);
   const [nfts, setNfts] = useState<any[]>([]);
   const [escrows, setEscrows] = useState<any[]>([]);
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RedeemNftFormInputs>();
-  const currentAccount = wallet.currentWallet?.accounts[0];
+  const currentAccount = currentWallet?.accounts[0];
   const selectedAction = watch('action');
 
   useEffect(() => {
@@ -59,14 +58,22 @@ export function RedeemNft() {
   };
 
   const onSubmit: SubmitHandler<RedeemNftFormInputs> = async (data) => {
-    if (!currentAccount || !wallet.currentWallet) return;
+    if (!currentAccount || !currentWallet) return;
     
     setIsLoading(true);
     try {
       if (data.action === 'redeem') {
         await redeemEscrow(
-          signAndExecuteTransaction,
-          reportTransactionEffects,
+          async (transaction) => {
+            const response = await signAndExecuteTransaction({
+              transaction: transaction.serialize(),
+            });
+            return { digest: response.digest };
+          },
+          async (effects) => {
+            // Handle transaction effects
+            console.log('Transaction effects:', effects);
+          },
           data.escrowId,
           data.nftObjectId,
           '0x2::nft::NFT', // NFT type
@@ -76,8 +83,16 @@ export function RedeemNft() {
         alert('NFT redeemed successfully!');
       } else {
         await burnEscrowNft(
-          signAndExecuteTransaction,
-          reportTransactionEffects,
+          async (transaction) => {
+            const response = await signAndExecuteTransaction({
+              transaction: transaction.serialize(),
+            });
+            return { digest: response.digest };
+          },
+          async (effects) => {
+            // Handle transaction effects
+            console.log('Transaction effects:', effects);
+          },
           data.nftObjectId,
           currentAccount,
         );

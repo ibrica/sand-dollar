@@ -88,8 +88,14 @@ export async function createEscrowMintNft(
 
   const result = await signAndExecuteTransactionBlock(tx);
 
-  if (result.effects) {
-    await reportTransactionEffects(result.effects);
+  // Get transaction effects from the digest
+  const effects = await suiClient.getTransactionBlock({
+    digest: result.digest,
+    options: { showEffects: true },
+  });
+
+  if (effects.effects) {
+    await reportTransactionEffects(effects.effects);
   }
 
   return result;
@@ -122,8 +128,14 @@ export async function createEscrowWithNft(
 
   const result = await signAndExecuteTransactionBlock(tx);
 
-  if (result.effects) {
-    await reportTransactionEffects(result.effects);
+  // Get transaction effects from the digest
+  const effects = await suiClient.getTransactionBlock({
+    digest: result.digest,
+    options: { showEffects: true },
+  });
+
+  if (effects.effects) {
+    await reportTransactionEffects(effects.effects);
   }
 
   return result;
@@ -152,8 +164,14 @@ export async function redeemEscrow(
 
   const result = await signAndExecuteTransactionBlock(tx);
 
-  if (result.effects) {
-    await reportTransactionEffects(result.effects);
+  // Get transaction effects from the digest
+  const effects = await suiClient.getTransactionBlock({
+    digest: result.digest,
+    options: { showEffects: true },
+  });
+
+  if (effects.effects) {
+    await reportTransactionEffects(effects.effects);
   }
 
   return result;
@@ -176,8 +194,14 @@ export async function burnEscrowNft(
 
   const result = await signAndExecuteTransactionBlock(tx);
 
-  if (result.effects) {
-    await reportTransactionEffects(result.effects);
+  // Get transaction effects from the digest
+  const effects = await suiClient.getTransactionBlock({
+    digest: result.digest,
+    options: { showEffects: true },
+  });
+
+  if (effects.effects) {
+    await reportTransactionEffects(effects.effects);
   }
 
   return result;

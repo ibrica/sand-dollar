@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWallet } from './WalletProvider';
-import { useCurrentWallet } from '@mysten/dapp-kit';
+import { useCurrentWallet, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { createEscrowMintNft, getUserCoins, YieldProvider } from '@/lib/sui';
 
@@ -13,14 +12,14 @@ type CreateEscrowFormInputs = {
 };
 
 export function CreateEscrow() {
-  const { signAndExecuteTransactionBlock } = useWallet();
-  const wallet = useCurrentWallet();
+  const { currentWallet, isConnected } = useCurrentWallet();
+  const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [isLoading, setIsLoading] = useState(false);
   const [coins, setCoins] = useState<any[]>([]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<CreateEscrowFormInputs>();
 
-  const currentAccount = wallet.currentWallet?.accounts[0];
+  const currentAccount = currentWallet?.accounts[0];
 
   useEffect(() => {
     if (currentAccount?.address) {
@@ -40,7 +39,7 @@ export function CreateEscrow() {
   };
 
   const onSubmit: SubmitHandler<CreateEscrowFormInputs> = async (data) => {
-    if (!currentAccount || !wallet.currentWallet) return;
+    if (!currentAccount || !currentWallet) return;
     
     setIsLoading(true);
     try {
@@ -60,7 +59,12 @@ export function CreateEscrow() {
       }
       
       const result = await createEscrowMintNft(
-        signAndExecuteTransactionBlock,
+        async (transaction) => {
+          const response = await signAndExecuteTransaction({
+            transaction: transaction.serialize(),
+          });
+          return { digest: response.digest };
+        },
         async (effects) => {
           // Handle transaction effects
           console.log('Transaction effects:', effects);

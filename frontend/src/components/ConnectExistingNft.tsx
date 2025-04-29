@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useCurrentWallet } from '@mysten/dapp-kit';
-import { useWallet } from './WalletProvider';
+import { useCurrentWallet, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { 
   createEscrowWithNft, 
@@ -19,15 +18,15 @@ type ConnectExistingNftFormInputs = {
 };
 
 export function ConnectExistingNft() {
-  const wallet = useCurrentWallet();
-  const { signAndExecuteTransaction, reportTransactionEffects } = useWallet();
+  const { currentWallet, isConnected } = useCurrentWallet();
+  const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [isLoading, setIsLoading] = useState(false);
   const [nfts, setNfts] = useState<any[]>([]);
   const [coins, setCoins] = useState<any[]>([]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<ConnectExistingNftFormInputs>();
 
-  const currentAccount = wallet.currentWallet?.accounts[0];
+  const currentAccount = currentWallet?.accounts[0];
 
   useEffect(() => {
     if (currentAccount?.address) {
@@ -65,7 +64,7 @@ export function ConnectExistingNft() {
   };
 
   const onSubmit: SubmitHandler<ConnectExistingNftFormInputs> = async (data) => {
-    if (!currentAccount || !wallet.currentWallet) return;
+    if (!currentAccount || !currentWallet) return;
     
     setIsLoading(true);
     try {
@@ -73,8 +72,16 @@ export function ConnectExistingNft() {
       const yieldProvider = parseInt(data.yieldProvider) as YieldProvider;
       
       await createEscrowWithNft(
-        signAndExecuteTransaction,
-        reportTransactionEffects,
+        async (transaction) => {
+          const response = await signAndExecuteTransaction({
+            transaction: transaction.serialize(),
+          });
+          return { digest: response.digest };
+        },
+        async (effects) => {
+          // Handle transaction effects
+          console.log('Transaction effects:', effects);
+        },
         '0x2::sui::SUI', // Coin type
         data.coinObject,
         amount,

@@ -12,7 +12,7 @@ import { Logo } from '@/components/Logo';
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { currentWallet, isConnected } = useCurrentWallet();
+  const { isConnected } = useCurrentWallet();
 
   return (
     <main className="min-h-screen bg-background">
