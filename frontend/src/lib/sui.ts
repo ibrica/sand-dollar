@@ -1,7 +1,8 @@
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { toB64 } from '@mysten/sui.js/utils';
-import { WalletAccount } from '@mysten/wallet-standard';
+import { SuiClient } from '@mysten/sui/client';
+import { getFullnodeUrl } from '@mysten/sui/client';
+import { Transaction } from '@mysten/sui/transactions';
+import { toB64 } from '@mysten/sui/utils';
+import { type WalletAccount } from '@mysten/wallet-standard';
 
 const NETWORK = process.env.NEXT_PUBLIC_NETWORK || 'testnet';
 const PACKAGE_ID = process.env.NEXT_PUBLIC_PACKAGE_ID || '';
@@ -37,7 +38,7 @@ export enum YieldProvider {
 
 export async function createEscrowMintNft(
   signAndExecuteTransaction: (
-    tx: TransactionBlock,
+    tx: Transaction,
     account: WalletAccount
   ) => Promise<any>,
   reportTransactionEffects: (
@@ -50,13 +51,13 @@ export async function createEscrowMintNft(
   yieldProvider: YieldProvider,
   account: WalletAccount
 ) {
-  const tx = new TransactionBlock();
+  const tx = new Transaction();
 
   tx.setSender(account.address);
 
   // Get the coin for contract payment
   const coinForContract = tx.splitCoins(tx.object(coinObjectId), [
-    tx.pure(amount),
+    tx.pure.u64(amount),
   ]);
 
   // Get a separate coin for gas
@@ -86,7 +87,7 @@ export async function createEscrowMintNft(
   tx.moveCall({
     target: `${CONTRACT_CONFIG.packageId}::${CONTRACT_CONFIG.moduleName}::create_escrow_mint_nft`,
     typeArguments: [coinType],
-    arguments: [coinForContract, tx.pure(yieldProvider), clock],
+    arguments: [coinForContract, tx.pure.u8(yieldProvider), clock],
   });
 
   tx.setGasBudget(10_000_000);
@@ -107,7 +108,7 @@ export async function createEscrowMintNft(
 
 export async function createEscrowWithNft(
   signAndExecuteTransaction: (
-    tx: TransactionBlock,
+    tx: Transaction,
     account: WalletAccount
   ) => Promise<any>,
   reportTransactionEffects: (
@@ -122,16 +123,16 @@ export async function createEscrowWithNft(
   yieldProvider: YieldProvider,
   account: WalletAccount
 ) {
-  const tx = new TransactionBlock();
+  const tx = new Transaction();
 
-  const coin = tx.splitCoins(tx.object(coinObjectId), [tx.pure(amount)]);
+  const coin = tx.splitCoins(tx.object(coinObjectId), [tx.pure.u64(amount)]);
 
   const clock = tx.object('0x6');
 
   tx.moveCall({
     target: `${CONTRACT_CONFIG.packageId}::${CONTRACT_CONFIG.moduleName}::create_escrow_with_nft`,
     typeArguments: [nftType, coinType],
-    arguments: [coin, tx.object(nftObjectId), tx.pure(yieldProvider), clock],
+    arguments: [coin, tx.object(nftObjectId), tx.pure.u8(yieldProvider), clock],
   });
 
   const result = await signAndExecuteTransaction(tx, account);
@@ -150,7 +151,7 @@ export async function createEscrowWithNft(
 
 export async function redeemEscrow(
   signAndExecuteTransaction: (
-    tx: TransactionBlock,
+    tx: Transaction,
     account: WalletAccount
   ) => Promise<any>,
   reportTransactionEffects: (
@@ -163,7 +164,7 @@ export async function redeemEscrow(
   coinType: string,
   account: WalletAccount
 ) {
-  const tx = new TransactionBlock();
+  const tx = new Transaction();
 
   const clock = tx.object('0x6');
 
@@ -189,7 +190,7 @@ export async function redeemEscrow(
 
 export async function burnEscrowNft(
   signAndExecuteTransaction: (
-    tx: TransactionBlock,
+    tx: Transaction,
     account: WalletAccount
   ) => Promise<any>,
   reportTransactionEffects: (
@@ -199,7 +200,7 @@ export async function burnEscrowNft(
   nftObjectId: string,
   account: WalletAccount
 ) {
-  const tx = new TransactionBlock();
+  const tx = new Transaction();
 
   tx.moveCall({
     target: `${CONTRACT_CONFIG.packageId}::${CONTRACT_CONFIG.moduleName}::burn_escrow_nft`,
