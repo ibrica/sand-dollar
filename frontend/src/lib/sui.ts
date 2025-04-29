@@ -37,14 +37,10 @@ export enum YieldProvider {
 }
 
 export async function createEscrowMintNft(
-  signAndExecuteTransaction: (
-    tx: Transaction,
-    account: WalletAccount
-  ) => Promise<any>,
-  reportTransactionEffects: (
-    effects: any,
-    account: WalletAccount
-  ) => Promise<void>,
+  signAndExecuteTransactionBlock: (
+    transaction: Transaction
+  ) => Promise<{ digest: string }>,
+  reportTransactionEffects: (effects: any) => Promise<void>,
   coinType: string,
   coinObjectId: string,
   amount: bigint,
@@ -90,31 +86,20 @@ export async function createEscrowMintNft(
     arguments: [coinForContract, tx.pure.u8(yieldProvider), clock],
   });
 
-  tx.setGasBudget(10_000_000);
-
-  const result = await signAndExecuteTransaction(tx, account);
+  const result = await signAndExecuteTransactionBlock(tx);
 
   if (result.effects) {
-    await reportTransactionEffects(
-      typeof result.effects === 'string'
-        ? result.effects
-        : toB64(result.effects),
-      account
-    );
+    await reportTransactionEffects(result.effects);
   }
 
   return result;
 }
 
 export async function createEscrowWithNft(
-  signAndExecuteTransaction: (
-    tx: Transaction,
-    account: WalletAccount
-  ) => Promise<any>,
-  reportTransactionEffects: (
-    effects: any,
-    account: WalletAccount
-  ) => Promise<void>,
+  signAndExecuteTransactionBlock: (
+    transaction: Transaction
+  ) => Promise<{ digest: string }>,
+  reportTransactionEffects: (effects: any) => Promise<void>,
   coinType: string,
   coinObjectId: string,
   amount: bigint,
@@ -135,29 +120,20 @@ export async function createEscrowWithNft(
     arguments: [coin, tx.object(nftObjectId), tx.pure.u8(yieldProvider), clock],
   });
 
-  const result = await signAndExecuteTransaction(tx, account);
+  const result = await signAndExecuteTransactionBlock(tx);
 
   if (result.effects) {
-    await reportTransactionEffects(
-      typeof result.effects === 'string'
-        ? result.effects
-        : toB64(result.effects),
-      account
-    );
+    await reportTransactionEffects(result.effects);
   }
 
   return result;
 }
 
 export async function redeemEscrow(
-  signAndExecuteTransaction: (
-    tx: Transaction,
-    account: WalletAccount
-  ) => Promise<any>,
-  reportTransactionEffects: (
-    effects: any,
-    account: WalletAccount
-  ) => Promise<void>,
+  signAndExecuteTransactionBlock: (
+    transaction: Transaction
+  ) => Promise<{ digest: string }>,
+  reportTransactionEffects: (effects: any) => Promise<void>,
   escrowId: string,
   nftObjectId: string,
   nftType: string,
@@ -174,29 +150,20 @@ export async function redeemEscrow(
     arguments: [tx.object(nftObjectId), tx.object(escrowId), clock],
   });
 
-  const result = await signAndExecuteTransaction(tx, account);
+  const result = await signAndExecuteTransactionBlock(tx);
 
   if (result.effects) {
-    await reportTransactionEffects(
-      typeof result.effects === 'string'
-        ? result.effects
-        : toB64(result.effects),
-      account
-    );
+    await reportTransactionEffects(result.effects);
   }
 
   return result;
 }
 
 export async function burnEscrowNft(
-  signAndExecuteTransaction: (
-    tx: Transaction,
-    account: WalletAccount
-  ) => Promise<any>,
-  reportTransactionEffects: (
-    effects: any,
-    account: WalletAccount
-  ) => Promise<void>,
+  signAndExecuteTransactionBlock: (
+    transaction: Transaction
+  ) => Promise<{ digest: string }>,
+  reportTransactionEffects: (effects: any) => Promise<void>,
   nftObjectId: string,
   account: WalletAccount
 ) {
@@ -207,15 +174,10 @@ export async function burnEscrowNft(
     arguments: [tx.object(nftObjectId)],
   });
 
-  const result = await signAndExecuteTransaction(tx, account);
+  const result = await signAndExecuteTransactionBlock(tx);
 
   if (result.effects) {
-    await reportTransactionEffects(
-      typeof result.effects === 'string'
-        ? result.effects
-        : toB64(result.effects),
-      account
-    );
+    await reportTransactionEffects(result.effects);
   }
 
   return result;

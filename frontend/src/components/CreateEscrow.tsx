@@ -13,7 +13,7 @@ type CreateEscrowFormInputs = {
 };
 
 export function CreateEscrow() {
-  const { signAndExecuteTransaction, reportTransactionEffects } = useWallet();
+  const { signAndExecuteTransactionBlock } = useWallet();
   const wallet = useCurrentWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [coins, setCoins] = useState<any[]>([]);
@@ -59,9 +59,12 @@ export function CreateEscrow() {
         throw new Error(`Insufficient balance. You need at least ${(Number(totalAmount) / 1_000_000_000).toFixed(2)} SUI (including gas)`);
       }
       
-      await createEscrowMintNft(
-        signAndExecuteTransaction,
-        reportTransactionEffects,
+      const result = await createEscrowMintNft(
+        signAndExecuteTransactionBlock,
+        async (effects) => {
+          // Handle transaction effects
+          console.log('Transaction effects:', effects);
+        },
         '0x2::sui::SUI', // Coin type
         data.coinObject,
         amount,

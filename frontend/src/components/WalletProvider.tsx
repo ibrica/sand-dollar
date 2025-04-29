@@ -1,14 +1,15 @@
 'use client';
 
-import { useWallet } from '@mysten/dapp-kit';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { useCurrentWallet, useSignTransaction, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
+import { Transaction } from '@mysten/sui/transactions';
 import { createContext, useContext, ReactNode } from 'react';
+import { fromB64 } from '@mysten/sui/utils';
 
 interface WalletContextType {
   connected: boolean;
   connecting: boolean;
-  signAndExecuteTransactionBlock: (transaction: TransactionBlock) => Promise<{ digest: string }>;
-  signTransactionBlock: (transaction: TransactionBlock) => Promise<Uint8Array>;
+  signAndExecuteTransactionBlock: (transaction: Transaction) => Promise<{ digest: string }>;
+  signTransactionBlock: (transaction: Transaction) => Promise<Uint8Array>;
 }
 
 const WalletContext = createContext<WalletContextType>({
@@ -23,37 +24,34 @@ const WalletContext = createContext<WalletContextType>({
 });
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const { 
-    currentAccount,
-    isConnecting,
-    signAndExecuteTransactionBlock: walletSignAndExecute,
-    signTransactionBlock: walletSignTransaction
-  } = useWallet();
+  const { currentWallet, isConnected, isConnecting } = useCurrentWallet();
+  const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
+  const { mutateAsync: signTransaction } = useSignTransaction();
 
-  const connected = !!currentAccount;
+  const connected = isConnected;
 
-  const signAndExecuteTransactionBlock = async (transaction: TransactionBlock) => {
-    if (!currentAccount) {
+  const handleSignAndExecuteTransactionBlock = async (transaction: Transaction) => {
+    if (!currentWallet) {
       throw new Error('Wallet not connected');
     }
 
-    const result = await walletSignAndExecute({
-      transactionBlock: transaction,
+    const result = await signAndExecuteTransaction({
+      transaction: transaction.serialize(),
     });
 
     return { digest: result.digest };
   };
 
-  const signTransactionBlock = async (transaction: TransactionBlock) => {
-    if (!currentAccount) {
+  const handleSignTransactionBlock = async (transaction: Transaction) => {
+    if (!currentWallet) {
       throw new Error('Wallet not connected');
     }
 
-    const result = await walletSignTransaction({
-      transactionBlock: transaction,
+    const result = await signTransaction({
+      transaction: transaction.serialize(),
     });
 
-    return result.bytes;
+    return fromB64(result.bytes);
   };
 
   return (
@@ -61,8 +59,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       value={{
         connected,
         connecting: isConnecting,
-        signAndExecuteTransactionBlock,
-        signTransactionBlock,
+        signAndExecuteTransactionBlock: handleSignAndExecuteTransactionBlock,
+        signTransactionBlock: handleSignTransactionBlock,
       }}
     >
       {children}
@@ -70,6 +68,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useWalletContext() {
+export function useWallet() {
   return useContext(WalletContext);
 }
