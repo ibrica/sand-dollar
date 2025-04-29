@@ -1,37 +1,33 @@
 import React from 'react';
+import LogoSvg from '@/assets/logo.svg';
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="relative w-full min-h-[300px] rounded-2xl overflow-hidden bg-gradient-to-br from-background via-background-light to-primary/20">
-      {/* Background starfish logo */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-5">
-        <svg
-          width="400"
-          height="400"
-          viewBox="0 0 400 400"
-          className="text-text"
-        >
-          <path
-            d="M200 50 L300 150 L250 300 L150 300 L100 150 Z"
-            fill="currentColor"
-          />
-        </svg>
+    <div className="relative w-full h-[400px] rounded-xl overflow-hidden shadow-lg">
+      {/* Background layers */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 z-10"></div>
+      <div className="absolute inset-0 bg-background-light z-0"></div>
+      
+      {/* Large logo in the background */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-10 z-5">
+        <LogoSvg 
+          width={280} 
+          height={280} 
+          style={{ stroke: '#FFFFFF' }}
+        />
       </div>
-
+      
       {/* Content */}
-      <div className="relative z-10 p-8">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Dashboard Preview
-        </h2>
-        <p className="mt-2 text-text-secondary text-lg">
-          Your NFT portfolio analytics at a glance
-        </p>
-
-        {/* Add your dashboard content here */}
-        <div className="mt-8">
-          {/* Dashboard widgets will go here */}
+      <div className="absolute inset-0 flex items-center justify-center z-20">
+        <div className="text-center">
+          <div className="text-3xl font-bold mb-4 gradient-text">Dashboard Preview</div>
+          <p className="text-text-secondary">Your NFT portfolio analytics at a glance</p>
         </div>
       </div>
+
+      {/* Decorative elements */}
+      <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
+      <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
     </div>
   );
 };

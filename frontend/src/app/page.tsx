@@ -51,7 +51,7 @@ export default function Home() {
             </div>
 
             {/* Right Column - Dashboard Preview */}
-            <div className="bg-background-light rounded-2xl p-8 shadow-xl">
+            <div className="lg:w-full">
               <Dashboard />
             </div>
           </div>
