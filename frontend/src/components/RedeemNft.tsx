@@ -16,7 +16,6 @@ export function RedeemNft() {
   const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [isLoading, setIsLoading] = useState(false);
   const [nfts, setNfts] = useState<any[]>([]);
-  const [escrows, setEscrows] = useState<any[]>([]);
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RedeemNftFormInputs>();
   const currentAccount = currentWallet?.accounts[0];
@@ -25,7 +24,6 @@ export function RedeemNft() {
   useEffect(() => {
     if (currentAccount?.address) {
       fetchUserNfts();
-      fetchUserEscrows();
     }
   }, [currentAccount]);
 
@@ -40,20 +38,6 @@ export function RedeemNft() {
       setNfts(userNfts);
     } catch (error) {
       console.error('Error fetching NFTs:', error);
-    }
-  };
-
-  const fetchUserEscrows = async () => {
-    if (!currentAccount?.address) return;
-    
-    try {
-      const userEscrows = await getOwnedObjects(
-        currentAccount.address,
-        `${process.env.NEXT_PUBLIC_PACKAGE_ID}::sand_dollar::Escrow`
-      );
-      setEscrows(userEscrows);
-    } catch (error) {
-      console.error('Error fetching escrows:', error);
     }
   };
 
@@ -145,18 +129,13 @@ export function RedeemNft() {
         
         {selectedAction === 'redeem' && (
           <div>
-            <label className="block text-sm font-medium text-white">Escrow</label>
-            <select
-              {...register('escrowId', { required: selectedAction === 'redeem' ? 'Please select an escrow' : false })}
+            <label className="block text-sm font-medium text-white">Escrow ID</label>
+            <input
+              type="text"
+              {...register('escrowId', { required: selectedAction === 'redeem' ? 'Please enter an escrow ID' : false })}
               className="mt-1 block w-full px-3 py-2 bg-background border border-border rounded-md shadow-sm text-white focus:outline-none focus:ring-accent focus:border-accent"
-            >
-              <option value="">Select an escrow</option>
-              {escrows.map((escrow) => (
-                <option key={escrow.data.objectId} value={escrow.data.objectId}>
-                  {escrow.data.objectId.substring(0, 8)}...
-                </option>
-              ))}
-            </select>
+              placeholder="Enter escrow ID"
+            />
             {errors.escrowId && <p className="text-error text-xs mt-1">{errors.escrowId.message}</p>}
           </div>
         )}
