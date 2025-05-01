@@ -1,5 +1,4 @@
 import React from 'react';
-import Image from 'next/image';
 import LogoSvg from '@/assets/logo.svg';
 
 export const Hero = () => {

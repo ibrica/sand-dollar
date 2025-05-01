@@ -12,9 +12,10 @@ type CreateEscrowFormInputs = {
 };
 
 export function CreateEscrow() {
-  const { currentWallet, isConnected } = useCurrentWallet();
+  const { currentWallet } = useCurrentWallet();
   const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [isLoading, setIsLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [coins, setCoins] = useState<any[]>([]);
   
   const { register, handleSubmit, formState: { errors } } = useForm<CreateEscrowFormInputs>();
@@ -58,7 +59,7 @@ export function CreateEscrow() {
         throw new Error(`Insufficient balance. You need at least ${(Number(totalAmount) / 1_000_000_000).toFixed(2)} SUI (including gas)`);
       }
       
-      const result = await createEscrowMintNft(
+      await createEscrowMintNft(
         async (transaction) => {
           const response = await signAndExecuteTransaction({
             transaction: transaction.serialize(),
