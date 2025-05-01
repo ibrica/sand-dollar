@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -18,7 +19,7 @@ type ConnectExistingNftFormInputs = {
 };
 
 export function ConnectExistingNft() {
-  const { currentWallet, isConnected } = useCurrentWallet();
+  const { currentWallet } = useCurrentWallet();
   const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [isLoading, setIsLoading] = useState(false);
   const [nfts, setNfts] = useState<any[]>([]);
@@ -88,7 +89,6 @@ export function ConnectExistingNft() {
         data.nftObjectId,
         '0x2::nft::NFT', // NFT type
         yieldProvider,
-        currentAccount,
       );
       
       alert('Escrow created successfully!');

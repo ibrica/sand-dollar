@@ -12,9 +12,10 @@ type RedeemNftFormInputs = {
 };
 
 export function RedeemNft() {
-  const { currentWallet, isConnected } = useCurrentWallet();
+  const { currentWallet } = useCurrentWallet();
   const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [isLoading, setIsLoading] = useState(false);
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const [nfts, setNfts] = useState<any[]>([]);
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RedeemNftFormInputs>();
