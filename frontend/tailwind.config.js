@@ -42,6 +42,10 @@ module.exports = {
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'header-gradient': 'linear-gradient(to right, #5065D8, #00F2FE)',
       },
+      zIndex: {
+        'modal': '1000',
+        'modal-backdrop': '900',
+      },
     },
   },
   plugins: [],

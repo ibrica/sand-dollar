@@ -1,90 +1,74 @@
 'use client';
 
 import { useState } from 'react';
+import { useCurrentWallet } from '@mysten/dapp-kit';
+import { Button } from '@/components/ui/Button';
 import { ConnectWallet } from '@/components/ConnectWallet';
-import { CreateEscrow } from '@/components/CreateEscrow';
-import { ConnectExistingNft } from '@/components/ConnectExistingNft';
-import { RedeemNft } from '@/components/RedeemNft';
-import { useWallet } from '@/components/WalletProvider';
-import { Hero } from '@/components/Hero';
 import { Logo } from '@/components/Logo';
+import { FeaturesTabs } from '@/components/FeaturesTabs';
+import Dashboard from '@/components/Dashboard';
 
 export default function Home() {
-  const { accounts } = useWallet();
-  const currentAccount = accounts?.[0];
-  const [activeTab, setActiveTab] = useState<'create' | 'connect' | 'redeem'>('create');
-  
+  const { isConnected } = useCurrentWallet();
+
   return (
     <main className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border py-4">
-        <div className="container flex justify-between items-center">
+        <div className="container mx-auto px-4 flex justify-between items-center">
           <Logo size={48} color="gradient" />
           <ConnectWallet />
         </div>
       </header>
 
-      {/* Hero Section */}
-      <Hero />
-      
-      {/* Main Content */}
-      <div className="container py-16">
-        {currentAccount && (
-          <div className="mb-6 card">
-            <div className="flex flex-col sm:flex-row border-b border-border mb-6">
-              <button
-                onClick={() => setActiveTab('create')}
-                className={`py-3 px-4 font-medium border-b-2 ${
-                  activeTab === 'create' 
-                    ? 'border-accent text-accent' 
-                    : 'border-transparent text-text-secondary hover:text-white'
-                }`}
-              >
-                Create New NFT
-              </button>
-              <button
-                onClick={() => setActiveTab('connect')}
-                className={`py-3 px-4 font-medium border-b-2 ${
-                  activeTab === 'connect' 
-                    ? 'border-accent text-accent' 
-                    : 'border-transparent text-text-secondary hover:text-white'
-                }`}
-              >
-                Use Existing NFT
-              </button>
-              <button
-                onClick={() => setActiveTab('redeem')}
-                className={`py-3 px-4 font-medium border-b-2 ${
-                  activeTab === 'redeem' 
-                    ? 'border-accent text-accent' 
-                    : 'border-transparent text-text-secondary hover:text-white'
-                }`}
-              >
-                Redeem/Burn
-              </button>
+      {/* Hero Section with Dashboard Preview */}
+      <div className="relative isolate px-6 pt-8 lg:px-8">
+        <div className="mx-auto max-w-7xl py-16 sm:py-24 lg:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Hero Content */}
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Sand Dollar</span>
+              </h1>
+              <h2 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mt-2">
+                Yield-Generating NFTs<br />on Sui
+              </h2>
+              <p className="mt-6 text-lg leading-8 text-gray-300 max-w-2xl">
+                Create, manage, and trade NFTs that generate yield. Unlock the potential of your digital assets with Sand Dollar.
+              </p>
+              <div className="mt-10 flex gap-x-6">
+                {!isConnected ? (
+                  <ConnectWallet />
+                ) : (
+                  <Button size="lg" className="bg-primary hover:bg-secondary text-white">
+                    Get Started
+                  </Button>
+                )}
+                <Button size="lg" variant="outline">
+                  Learn More
+                </Button>
+              </div>
             </div>
-            
-            <div className="p-6">
-              {activeTab === 'create' && <CreateEscrow />}
-              {activeTab === 'connect' && <ConnectExistingNft />}
-              {activeTab === 'redeem' && <RedeemNft />}
+
+            {/* Right Column - Dashboard Preview */}
+            <div className="lg:w-full">
+              <Dashboard />
             </div>
           </div>
-        )}
-        
-        {!currentAccount && (
-          <div className="text-center p-12 card">
-            <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
-            <p className="mb-6 text-text-secondary">Connect your wallet to create yield-generating NFTs</p>
-            <div className="flex justify-center">
-              <ConnectWallet />
-            </div>
-          </div>
-        )}
+        </div>
       </div>
+
+      {/* Features Section - Only shown when wallet is connected */}
+      {isConnected && (
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto bg-background rounded-2xl p-8 shadow-xl">
+            <FeaturesTabs />
+          </div>
+        </div>
+      )}
       
-      <footer className="border-t border-border py-8">
-        <div className="container">
+      <footer className="border-t border-border py-8 mt-auto">
+        <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
               <Logo size={32} color="gradient" />

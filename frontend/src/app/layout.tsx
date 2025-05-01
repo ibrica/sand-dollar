@@ -1,8 +1,7 @@
+import '@/styles/global.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import '@/styles/global.css';
-import { WalletProvider } from '@/components/WalletProvider';
-import React from 'react';
+import { ClientLayout } from './ClientLayout';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,9 +30,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
       </head>
       <body className={inter.className}>
-        <WalletProvider>
+        <ClientLayout>
           {children}
-        </WalletProvider>
+        </ClientLayout>
       </body>
     </html>
   );

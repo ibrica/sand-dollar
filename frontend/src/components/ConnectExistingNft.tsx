@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWallet } from './WalletProvider';
+import { useCurrentWallet, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { 
   createEscrowWithNft, 
@@ -10,22 +10,23 @@ import {
   YieldProvider 
 } from '@/lib/sui';
 
-type ConnectNftFormInputs = {
+type ConnectExistingNftFormInputs = {
+  nftObjectId: string;
   amount: string;
   yieldProvider: string;
   coinObject: string;
-  nftObject: string;
 };
 
 export function ConnectExistingNft() {
-  const { accounts, selectedWallet, signAndExecuteTransaction, reportTransactionEffects } = useWallet();
+  const { currentWallet, isConnected } = useCurrentWallet();
+  const { mutateAsync: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const [isLoading, setIsLoading] = useState(false);
-  const [coins, setCoins] = useState<any[]>([]);
   const [nfts, setNfts] = useState<any[]>([]);
+  const [coins, setCoins] = useState<any[]>([]);
   
-  const { register, handleSubmit, formState: { errors } } = useForm<ConnectNftFormInputs>();
-  
-  const currentAccount = accounts?.[0];
+  const { register, handleSubmit, formState: { errors } } = useForm<ConnectExistingNftFormInputs>();
+
+  const currentAccount = currentWallet?.accounts[0];
 
   useEffect(() => {
     if (currentAccount?.address) {
@@ -62,35 +63,37 @@ export function ConnectExistingNft() {
     }
   };
 
-  const onSubmit: SubmitHandler<ConnectNftFormInputs> = async (data) => {
-    if (!currentAccount || !selectedWallet) return;
+  const onSubmit: SubmitHandler<ConnectExistingNftFormInputs> = async (data) => {
+    if (!currentAccount || !currentWallet) return;
     
     setIsLoading(true);
     try {
       const amount = BigInt(parseFloat(data.amount) * 1_000_000_000); // Convert to MIST (9 decimals)
       const yieldProvider = parseInt(data.yieldProvider) as YieldProvider;
       
-      // Find the NFT type from selected NFT
-      const selectedNft = nfts.find(nft => nft.data?.objectId === data.nftObject);
-      const nftType = selectedNft?.data?.type || '';
-      
       await createEscrowWithNft(
-        {
-          signAndExecuteTransaction: (tx, account) => signAndExecuteTransaction(tx, account),
-          reportTransactionEffects: reportTransactionEffects
+        async (transaction) => {
+          const response = await signAndExecuteTransaction({
+            transaction: transaction.serialize(),
+          });
+          return { digest: response.digest };
+        },
+        async (effects) => {
+          // Handle transaction effects
+          console.log('Transaction effects:', effects);
         },
         '0x2::sui::SUI', // Coin type
         data.coinObject,
         amount,
-        data.nftObject,
-        nftType,
+        data.nftObjectId,
+        '0x2::nft::NFT', // NFT type
         yieldProvider,
-        currentAccount
+        currentAccount,
       );
       
-      alert('Escrow created successfully with existing NFT!');
+      alert('Escrow created successfully!');
     } catch (error) {
-      console.error('Error creating escrow with NFT:', error);
+      console.error('Error creating escrow:', error);
       alert('Failed to create escrow. See console for details.');
     } finally {
       setIsLoading(false);
@@ -109,7 +112,7 @@ export function ConnectExistingNft() {
         <div>
           <label className="block text-sm font-medium text-white">NFT</label>
           <select
-            {...register('nftObject', { required: 'Please select an NFT' })}
+            {...register('nftObjectId', { required: 'Please select an NFT' })}
             className="mt-1 block w-full px-3 py-2 bg-background border border-border rounded-md shadow-sm text-white focus:outline-none focus:ring-accent focus:border-accent"
           >
             <option value="">Select an NFT</option>
@@ -119,7 +122,7 @@ export function ConnectExistingNft() {
               </option>
             ))}
           </select>
-          {errors.nftObject && <p className="text-error text-xs mt-1">{errors.nftObject.message}</p>}
+          {errors.nftObjectId && <p className="text-error text-xs mt-1">{errors.nftObjectId.message}</p>}
         </div>
         
         <div>
