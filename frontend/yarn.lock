@@ -1209,6 +1209,14 @@
   dependencies:
     "@scure/base" "^1.2.4"
 
+"@mysten/bcs@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@mysten/bcs/-/bcs-1.6.1.tgz#2e0a2e3f5b4afdb678b2a874cec4c4f341565b1e"
+  integrity sha512-pywsl2+jxbib5CbteAjMpmJpnj1pcUco2ff+lXCK3hfppPbkyWEMbZDQn1jNngV6ADQ3IFIvPs0FaS7fKWPOLA==
+  dependencies:
+    "@mysten/utils" "0.0.0"
+    "@scure/base" "^1.2.4"
+
 "@mysten/dapp-kit@^0.16.1":
   version "0.16.1"
   resolved "https://registry.yarnpkg.com/@mysten/dapp-kit/-/dapp-kit-0.16.1.tgz#c73b9dc5318df48ab4bb07cfc8fb50c83fd78cfa"
@@ -1257,13 +1265,31 @@
     poseidon-lite "^0.2.0"
     valibot "^0.36.0"
 
-"@mysten/sui@1.29.0", "@mysten/sui@^1.29.0":
+"@mysten/sui@1.29.0":
   version "1.29.0"
   resolved "https://registry.yarnpkg.com/@mysten/sui/-/sui-1.29.0.tgz#cd277e8299cf4cdafad4e9dcff4e0d44af96cd9a"
   integrity sha512-0rOGYy97DZaD+TocjKOgqPalPh/IZnbMYVI1ncAKYGR59SMeunuk7RCWL6rGA8hN//JBor4nVkXpId6FlbhEeA==
   dependencies:
     "@graphql-typed-document-node/core" "^3.2.0"
     "@mysten/bcs" "1.6.0"
+    "@mysten/utils" "0.0.0"
+    "@noble/curves" "^1.8.1"
+    "@noble/hashes" "^1.7.1"
+    "@scure/base" "^1.2.4"
+    "@scure/bip32" "^1.6.2"
+    "@scure/bip39" "^1.5.4"
+    gql.tada "^1.8.2"
+    graphql "^16.9.0"
+    poseidon-lite "^0.2.0"
+    valibot "^0.36.0"
+
+"@mysten/sui@^1.29.1":
+  version "1.29.1"
+  resolved "https://registry.yarnpkg.com/@mysten/sui/-/sui-1.29.1.tgz#1b2af78ff2816b1b20ce2e1558a1d6d8149a24f4"
+  integrity sha512-VkmaLIgXpuRMBFe47SC0swHemDx9qfhGQyxybFr2r3dTnh42gTFi0BlyW3aLr0Y2GxWbNlLphB5C3ELR7aqacw==
+  dependencies:
+    "@graphql-typed-document-node/core" "^3.2.0"
+    "@mysten/bcs" "1.6.1"
     "@mysten/utils" "0.0.0"
     "@noble/curves" "^1.8.1"
     "@noble/hashes" "^1.7.1"
