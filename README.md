@@ -40,13 +40,19 @@ cd contract
 sui move build
 ```
 
-3. Deploy the contract:
+3. Run tests:
+
+```bash
+sui move test
+```
+
+4. Deploy the contract:
 
 ```bash
 sui client publish --gas-budget 100000000
 ```
 
-4. Note the package ID from the deployment output.
+5. Note the package ID from the deployment output.
 
 ### Frontend
 
@@ -59,7 +65,7 @@ cd frontend
 2. Create a `.env.local` file with the following content:
 
 ```
-NEXT_PUBLIC_NETWORK=devnet
+NEXT_PUBLIC_NETWORK=testnet
 NEXT_PUBLIC_PACKAGE_ID=<your_package_id>  # Replace with the package ID from step 4 above
 NEXT_PUBLIC_MODULE_NAME=sand_dollar
 NEXT_PUBLIC_LOCAL_RPC=http://localhost:9000
