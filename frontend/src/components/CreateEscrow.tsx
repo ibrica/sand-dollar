@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useCurrentWallet, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { createEscrowMintNft, getUserCoins, YieldProvider } from '@/lib/sui';
+import { YieldProvider, getUserCoins, CONTRACT_CONFIG } from '@/lib/sui';
+import { Transaction } from '@mysten/sui/transactions';
 
 type CreateEscrowFormInputs = {
   amount: string;
@@ -47,35 +48,53 @@ export function CreateEscrow() {
       const amount = BigInt(parseFloat(data.amount) * 1_000_000_000); // Convert to MIST (9 decimals)
       const yieldProvider = parseInt(data.yieldProvider) as YieldProvider;
       
-      // Use the same coin for both escrow and gas
+      // Get the selected coin
       const selectedCoin = coins.find(coin => coin.coinObjectId === data.coinObject);
       
       if (!selectedCoin) {
         throw new Error('Selected coin not found');
       }
 
+      // Check if we have enough balance
       const totalAmount = amount + BigInt(10_000_000); // Amount + gas (0.01 SUI)
-      if (Number(selectedCoin.balance) < Number(totalAmount)) {
-        throw new Error(`Insufficient balance. You need at least ${(Number(totalAmount) / 1_000_000_000).toFixed(2)} SUI (including gas)`);
+      if (BigInt(selectedCoin.balance) < totalAmount) {
+        throw new Error(`Insufficient balance. You need at least ${Number(totalAmount) / 1_000_000_000} SUI (including gas)`);
       }
+
+      console.log('Creating transaction using Inputs.SuiCoinObject...');
       
-      await createEscrowMintNft(
-        async (transaction) => {
-          const response = await signAndExecuteTransaction({
-            transaction: transaction.serialize(),
-          });
-          return { digest: response.digest };
-        },
-        async (effects) => {
-          // Handle transaction effects
-          console.log('Transaction effects:', effects);
-        },
-        '0x2::sui::SUI', // Coin type
-        data.coinObject,
-        amount,
-        yieldProvider,
-        currentAccount,
-      );
+      // Create a fresh transaction
+      const tx = new Transaction();
+      
+      // Set sender address
+      tx.setSender(currentAccount.address);
+      
+      // Set gas budget
+      tx.setGasBudget(10000000n); // 0.01 SUI
+      
+      // Get reference to clock object
+      const clock = tx.object('0x6');
+      
+      // Use the selected coin directly with a specific amount
+      const escrowCoin = tx.splitCoins(tx.object(data.coinObject), [
+        tx.pure.u64(amount)
+      ]);
+      
+      // Use the contract function
+      tx.moveCall({
+        target: `${CONTRACT_CONFIG.packageId}::${CONTRACT_CONFIG.moduleName}::create_escrow_mint_nft`,
+        typeArguments: ['0x2::sui::SUI'],
+        arguments: [escrowCoin, tx.pure.u8(yieldProvider), clock],
+      });
+      
+      console.log('Transaction built, attempting to execute...');
+      
+      // Execute the transaction
+      const response = await signAndExecuteTransaction({
+        transaction: tx.serialize(),
+      });
+      
+      console.log('Transaction executed:', response.digest);
       
       alert('Escrow created successfully!');
     } catch (error) {

@@ -81,9 +81,14 @@ export function RedeemNft() {
         );
         alert('NFT burned successfully!');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error processing NFT:', error);
-      alert('Failed to process NFT. See console for details.');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Could not find the referenced transaction')) {
+        alert('Your transaction was submitted, but we could not get confirmation yet. Check your wallet for the transaction status.');
+      } else {
+        alert('Failed to process NFT. See console for details.');
+      }
     } finally {
       setIsLoading(false);
     }

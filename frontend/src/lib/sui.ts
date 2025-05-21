@@ -94,14 +94,43 @@ export async function createEscrowMintNft(
 
   const result = await signAndExecuteTransactionBlock(tx);
 
-  // Get transaction effects from the digest
-  const effects = await suiClient.getTransactionBlock({
-    digest: result.digest,
-    options: { showEffects: true },
-  });
+  try {
+    // Add retry mechanism with exponential backoff
+    const maxRetries = 3;
+    let retryCount = 0;
+    let effects = null;
 
-  if (effects.effects) {
-    await reportTransactionEffects(effects.effects);
+    while (retryCount < maxRetries) {
+      try {
+        const response = await suiClient.getTransactionBlock({
+          digest: result.digest,
+          options: { showEffects: true },
+        });
+
+        effects = response.effects;
+        break;
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) throw error;
+
+        // Exponential backoff - wait longer between each retry
+        const waitTime = 1000 * Math.pow(2, retryCount); // 2s, 4s, 8s
+        console.log(
+          `Transaction not found yet. Retrying in ${waitTime / 1000}s...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    }
+
+    if (effects) {
+      await reportTransactionEffects(effects);
+    }
+  } catch (error) {
+    console.warn(
+      'Could not fetch transaction effects, but transaction was submitted:',
+      result.digest
+    );
+    console.error(error);
   }
 
   return result;
@@ -133,14 +162,42 @@ export async function createEscrowWithNft(
 
   const result = await signAndExecuteTransactionBlock(tx);
 
-  // Get transaction effects from the digest
-  const effects = await suiClient.getTransactionBlock({
-    digest: result.digest,
-    options: { showEffects: true },
-  });
+  try {
+    const maxRetries = 3;
+    let retryCount = 0;
+    let effects = null;
 
-  if (effects.effects) {
-    await reportTransactionEffects(effects.effects);
+    while (retryCount < maxRetries) {
+      try {
+        const response = await suiClient.getTransactionBlock({
+          digest: result.digest,
+          options: { showEffects: true },
+        });
+
+        effects = response.effects;
+        break;
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) throw error;
+
+        // Exponential backoff - wait longer between each retry
+        const waitTime = 1000 * Math.pow(2, retryCount); // 2s, 4s, 8s
+        console.log(
+          `Transaction not found yet. Retrying in ${waitTime / 1000}s...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    }
+
+    if (effects) {
+      await reportTransactionEffects(effects);
+    }
+  } catch (error) {
+    console.warn(
+      'Could not fetch transaction effects, but transaction was submitted:',
+      result.digest
+    );
+    console.error(error);
   }
 
   return result;
@@ -170,14 +227,43 @@ export async function redeemEscrow(
 
   const result = await signAndExecuteTransactionBlock(tx);
 
-  // Get transaction effects from the digest
-  const effects = await suiClient.getTransactionBlock({
-    digest: result.digest,
-    options: { showEffects: true },
-  });
+  try {
+    // Add retry mechanism with exponential backoff
+    const maxRetries = 3;
+    let retryCount = 0;
+    let effects = null;
 
-  if (effects.effects) {
-    await reportTransactionEffects(effects.effects);
+    while (retryCount < maxRetries) {
+      try {
+        const response = await suiClient.getTransactionBlock({
+          digest: result.digest,
+          options: { showEffects: true },
+        });
+
+        effects = response.effects;
+        break;
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) throw error;
+
+        // Exponential backoff - wait longer between each retry
+        const waitTime = 1000 * Math.pow(2, retryCount); // 2s, 4s, 8s
+        console.log(
+          `Transaction not found yet. Retrying in ${waitTime / 1000}s...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    }
+
+    if (effects) {
+      await reportTransactionEffects(effects);
+    }
+  } catch (error) {
+    console.warn(
+      'Could not fetch transaction effects, but transaction was submitted:',
+      result.digest
+    );
+    console.error(error);
   }
 
   return result;
@@ -192,6 +278,9 @@ export async function burnEscrowNft(
 ) {
   const tx = new Transaction();
 
+  console.log(
+    `${CONTRACT_CONFIG.packageId}::${CONTRACT_CONFIG.moduleName}::burn_escrow_nft`
+  );
   tx.moveCall({
     target: `${CONTRACT_CONFIG.packageId}::${CONTRACT_CONFIG.moduleName}::burn_escrow_nft`,
     arguments: [tx.object(nftObjectId)],
@@ -199,14 +288,45 @@ export async function burnEscrowNft(
 
   const result = await signAndExecuteTransactionBlock(tx);
 
-  // Get transaction effects from the digest
-  const effects = await suiClient.getTransactionBlock({
-    digest: result.digest,
-    options: { showEffects: true },
-  });
+  try {
+    // Add retry mechanism with exponential backoff
+    const maxRetries = 3;
+    let retryCount = 0;
+    let effects = null;
 
-  if (effects.effects) {
-    await reportTransactionEffects(effects.effects);
+    while (retryCount < maxRetries) {
+      try {
+        // Get transaction effects from the digest
+        const response = await suiClient.getTransactionBlock({
+          digest: result.digest,
+          options: { showEffects: true },
+        });
+
+        effects = response.effects;
+        break; // Exit the loop if successful
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) throw error;
+
+        // Exponential backoff - wait longer between each retry
+        const waitTime = 1000 * Math.pow(2, retryCount); // 2s, 4s, 8s
+        console.log(
+          `Transaction not found yet. Retrying in ${waitTime / 1000}s...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    }
+
+    if (effects) {
+      await reportTransactionEffects(effects);
+    }
+  } catch (error) {
+    console.warn(
+      'Could not fetch transaction effects, but transaction was submitted:',
+      result.digest
+    );
+    console.error(error);
+    // Still return the result since the transaction was submitted
   }
 
   return result;
